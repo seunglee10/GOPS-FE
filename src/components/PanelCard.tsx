@@ -102,6 +102,10 @@ function PanelBody({
 type NewsPanelItem = {
   title: string;
   summary?: string;
+  localizedTitle?: string;
+  localizedSummary?: string;
+  originalTitle?: string;
+  originalSummary?: string;
   url?: string;
   source?: string;
   publishedAt?: string;
@@ -238,6 +242,10 @@ function readNewsItems(value: unknown): NewsPanelItem[] {
     items.push({
       title,
       summary: readString(source.summary) ?? undefined,
+      localizedTitle: readString(source.localizedTitle) ?? undefined,
+      localizedSummary: readString(source.localizedSummary) ?? undefined,
+      originalTitle: readString(source.originalTitle) ?? undefined,
+      originalSummary: readString(source.originalSummary) ?? undefined,
       url: readString(source.url) ?? undefined,
       source: readString(source.source) ?? undefined,
       publishedAt: readString(source.publishedAt) ?? undefined,

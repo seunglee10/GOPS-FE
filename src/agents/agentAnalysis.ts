@@ -56,6 +56,10 @@ export type FinalAnswer = {
 export type AgentNewsPanelItem = {
   title: string;
   summary?: string;
+  localizedTitle?: string;
+  localizedSummary?: string;
+  originalTitle?: string;
+  originalSummary?: string;
   url?: string;
   source?: string;
   publishedAt?: string;
