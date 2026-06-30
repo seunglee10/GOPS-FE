@@ -18,7 +18,7 @@ import {
   type ChartRuntimeAction,
   type ChartRuntimeState
 } from "@gops/chart-engine/runtime";
-import { buildAgentAnalysisRequest, formatAgentAnalysisReport, normalizeAgentAnalysisReport } from "../agents/agentAnalysis";
+import { buildAgentAnalysisRequest, formatAgentAnalysisReport, normalizeAgentAnalysisReport, type AgentAnalysisReport } from "../agents/agentAnalysis";
 import { MAX_USER_LAYOUTS, layoutSnapshotsEqual, makeCommand } from "../layout/commands";
 import { useAuth } from "../auth/AuthProvider";
 import { findTargetChartPanel } from "../layout/chartPanelSelection";
@@ -173,6 +173,7 @@ export function SystemArea({
             chartAgentAccess={chartAgentAccess}
             referencedChartTarget={referencedChartTarget}
             symbolUniverse={symbolUniverse}
+            onCommand={onCommand}
             onChartAction={onChartAction}
           />
         </div>
@@ -238,6 +239,7 @@ function AgentChatPanel({
   chartAgentAccess,
   referencedChartTarget,
   symbolUniverse,
+  onCommand,
   onChartAction
 }: {
   layout: WorkspaceLayout;
@@ -247,6 +249,7 @@ function AgentChatPanel({
   chartAgentAccess: ReturnType<typeof getChartAgentAccess>;
   referencedChartTarget?: AgentChartReference;
   symbolUniverse: readonly SupportedSymbol[];
+  onCommand: (command: LayoutCommand) => void;
   onChartAction: (action: ChartRuntimeAction) => void;
 }) {
   const { authEnabled, user, loading: authLoading, login } = useAuth();
@@ -350,6 +353,7 @@ function AgentChatPanel({
         })
         .then((payload) => {
           const report = normalizeAgentAnalysisReport(payload);
+          applyAgentAnalysisLayout(report, layout, onCommand);
           setMessages((current) => [...current, createChatMessage("assistant", formatAgentAnalysisReport(report))]);
         })
         .catch((error: unknown) => {
@@ -465,6 +469,39 @@ function chartProposalStatusMessage(
   return autoApplyEnabled
     ? "차트 명령을 적용했습니다."
     : "차트 명령 제안이 패널에서 대기 중입니다.";
+}
+
+function applyAgentAnalysisLayout(
+  report: AgentAnalysisReport,
+  layout: WorkspaceLayout,
+  onCommand: (command: LayoutCommand) => void
+) {
+  const newsCommand = report.layoutProposal?.commands.find((command) =>
+    command.type === "layout.panel.add" &&
+    command.payload.panelType === "newsFeed" &&
+    isRecord(command.payload.props)
+  );
+  const props = isRecord(newsCommand?.payload.props) ? newsCommand.payload.props : null;
+  if (!props || (!Array.isArray(props.latestNews) && !Array.isArray(props.majorNews))) {
+    return;
+  }
+
+  const existingNewsPanel = layout.panels.find((panel) => panel.type === "newsFeed");
+  if (existingNewsPanel) {
+    onCommand(makeCommand(
+      "layout.panel.props.update",
+      "system",
+      { panelId: existingNewsPanel.id, props },
+      { panelId: existingNewsPanel.id, group: existingNewsPanel.placement.group, zone: existingNewsPanel.placement.zone }
+    ));
+    return;
+  }
+
+  onCommand(makeCommand("layout.panel.add", "system", { panelType: "newsFeed", props }));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function shouldUseAgentAnalysisEndpoint(selectedAgents: AgentOption[], content: string): boolean {

@@ -4,6 +4,7 @@ export type AgentEvidenceItem = {
   title?: string;
   summary?: string;
   url?: string;
+  observedAt?: string;
   raw?: Record<string, unknown>;
 };
 
@@ -52,6 +53,38 @@ export type FinalAnswer = {
   limitations: string[];
 };
 
+export type AgentNewsPanelItem = {
+  title: string;
+  summary?: string;
+  url?: string;
+  source?: string;
+  publishedAt?: string;
+  symbol?: string;
+  symbols: string[];
+  eventType?: string;
+  impactDirection?: string;
+  relevanceScore?: number;
+  importanceScore?: number;
+};
+
+export type AgentNewsPanelData = {
+  symbol?: string;
+  updatedAt?: string;
+  latestNews: AgentNewsPanelItem[];
+  majorNews: AgentNewsPanelItem[];
+};
+
+export type AgentLayoutCommand = {
+  type: string;
+  payload: Record<string, unknown>;
+};
+
+export type AgentLayoutProposal = {
+  title?: string;
+  rationale?: string;
+  commands: AgentLayoutCommand[];
+};
+
 export type AgentAnalysisReport = {
   analysisId: string;
   summary: string;
@@ -62,6 +95,7 @@ export type AgentAnalysisReport = {
   findings: AgentFinding[];
   providerEvidence: AgentEvidenceItem[];
   notificationDecision?: NotificationDecision | null;
+  layoutProposal?: AgentLayoutProposal | null;
 };
 
 export type AgentAnalysisRequestInput = {
@@ -118,7 +152,8 @@ export function normalizeAgentAnalysisReport(payload: unknown): AgentAnalysisRep
     finalAnswer: normalizeFinalAnswer(source.finalAnswer),
     findings: readArray(source.findings).map(normalizeFinding).filter((item): item is AgentFinding => Boolean(item)),
     providerEvidence: readArray(source.providerEvidence).map(normalizeEvidence).filter((item): item is AgentEvidenceItem => Boolean(item)),
-    notificationDecision: normalizeNotification(source.notificationDecision)
+    notificationDecision: normalizeNotification(source.notificationDecision),
+    layoutProposal: normalizeLayoutProposal(source.layoutProposal)
   };
 }
 
@@ -222,8 +257,37 @@ function normalizeEvidence(value: unknown): AgentEvidenceItem | null {
     title: readString(source.title) ?? undefined,
     summary: readString(source.summary) ?? undefined,
     url: readString(source.url) ?? undefined,
+    observedAt: readString(source.observedAt) ?? undefined,
     raw: readObject(source.raw) ?? undefined
   };
+}
+
+function normalizeLayoutProposal(value: unknown): AgentLayoutProposal | null {
+  const source = readObject(value);
+  if (!source) {
+    return null;
+  }
+  const commands = readArray(source.commands)
+    .map(normalizeLayoutCommand)
+    .filter((item): item is AgentLayoutCommand => Boolean(item));
+  if (!commands.length) {
+    return null;
+  }
+  return {
+    title: readString(source.title) ?? undefined,
+    rationale: readString(source.rationale) ?? undefined,
+    commands
+  };
+}
+
+function normalizeLayoutCommand(value: unknown): AgentLayoutCommand | null {
+  const source = readObject(value);
+  const type = readString(source?.type);
+  const payload = readObject(source?.payload);
+  if (!source || !type || !payload) {
+    return null;
+  }
+  return { type, payload };
 }
 
 function normalizeRoute(value: unknown): IntentRoute | null {

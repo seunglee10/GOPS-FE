@@ -102,6 +102,7 @@ export type LayoutCommandType =
   | "layout.panel.remove"
   | "layout.panel.move"
   | "layout.panel.replace"
+  | "layout.panel.props.update"
   | "layout.panel.pin"
   | "layout.panel.unpin"
   | "layout.panel.select"
