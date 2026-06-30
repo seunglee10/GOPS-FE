@@ -37,6 +37,7 @@ type WorkspaceGridProps = {
   onSettingsTabChange: (tab: SystemMenuTab) => void;
   onEditAgent: (agentId?: string) => void;
   onUpdateAgent: (agentId: string, patch: AgentUpdatePatch) => void;
+  onSelectedAgentIdsChange: (agentIds: string[]) => void;
   onAddAgent: () => void;
   onDeleteAgent: (agentId: string) => void;
   onCloseSystemPanel: () => void;
@@ -126,6 +127,7 @@ export function WorkspaceGrid({
   onSettingsTabChange,
   onEditAgent,
   onUpdateAgent,
+  onSelectedAgentIdsChange,
   onAddAgent,
   onDeleteAgent,
   onCloseSystemPanel,
@@ -281,6 +283,7 @@ export function WorkspaceGrid({
         onSettingsTabChange={onSettingsTabChange}
         onEditAgent={onEditAgent}
         onUpdateAgent={onUpdateAgent}
+        onSelectedAgentIdsChange={onSelectedAgentIdsChange}
         onAddAgent={onAddAgent}
         onDeleteAgent={onDeleteAgent}
         onCloseSystemPanel={onCloseSystemPanel}

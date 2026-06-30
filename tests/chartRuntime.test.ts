@@ -39,6 +39,7 @@ import {
 } from "../src/layout/panelCatalogDrop";
 import { getPanelDefinition } from "../src/layout/panelRegistry";
 import { createPanelInstance, createPresetLayout } from "../src/layout/seed";
+import { defaultDraftSeedForAgents, initialAgentOptions, shouldUseAgentAnalysisEndpoint } from "../src/components/SystemArea";
 import type { PanelInstance, PanelPlacement, PanelType, WorkspaceLayout } from "../src/layout/types";
 import {
   clampRightOffset,
@@ -1086,6 +1087,21 @@ assert.deepEqual(agentAnalysisRequest, {
   routerMode: "hybrid"
 });
 
+assert.deepEqual(initialAgentOptions.map((agent) => agent.id), ["agent-01", "agent-02", "agent-04"]);
+assert.deepEqual(initialAgentOptions.map((agent) => agent.label), ["차트 에이전트", "뉴스 에이전트", "온톨로지 에이전트"]);
+assert.equal(initialAgentOptions.some((agent) => agent.id === "agent-03"), false);
+const chartAgentOption = initialAgentOptions[0]!;
+const newsAgentOption = initialAgentOptions[1]!;
+const ontologyAgentOption = initialAgentOptions[2]!;
+assert.equal(defaultDraftSeedForAgents([chartAgentOption]), "차트 분석해줘");
+assert.equal(defaultDraftSeedForAgents([newsAgentOption]), "뉴스 보여줘");
+assert.equal(defaultDraftSeedForAgents([ontologyAgentOption]), "기업 관계 분석해줘");
+assert.equal(defaultDraftSeedForAgents(initialAgentOptions), "차트, 뉴스, 기업 관계를 종합해서 변동 원인 분석해줘");
+assert.equal(shouldUseAgentAnalysisEndpoint([chartAgentOption], "차트 분석해줘"), false);
+assert.equal(shouldUseAgentAnalysisEndpoint([newsAgentOption], "뉴스 보여줘"), true);
+assert.equal(shouldUseAgentAnalysisEndpoint([ontologyAgentOption], "기업 관계 분석해줘"), true);
+assert.equal(shouldUseAgentAnalysisEndpoint([chartAgentOption, newsAgentOption], "차트 분석해줘"), true);
+
 const agentAnalysisReport = normalizeAgentAnalysisReport({
   analysisId: "analysis-1",
   symbol: "NVDA",
@@ -1115,7 +1131,6 @@ const agentAnalysisReport = normalizeAgentAnalysisReport({
   ],
   providerEvidence: [
     { provider: "news", status: "no-data", summary: "News provider is not configured." },
-    { provider: "macro", status: "no-data", summary: "Macro provider is not configured." },
     {
       provider: "ontology",
       status: "no-data",
@@ -1123,11 +1138,15 @@ const agentAnalysisReport = normalizeAgentAnalysisReport({
       raw: { relationType: "no-direct-control" }
     }
   ],
-  notificationDecision: {
-    level: "watch",
-    title: "NVDA price surge",
-    message: "Smoke event for Docker validation.",
-    reason: "Notification level follows the strongest attached market event severity."
+  notificationDecision: null,
+  layoutProposal: {
+    title: "MVP Agent layout proposal",
+    rationale: "선택된 MVP 에이전트 결과를 기존 패널로만 제안합니다. 자동 적용은 하지 않습니다.",
+    commands: [
+      { type: "layout.panel.add", payload: { panelType: "chart", symbol: "NVDA" } },
+      { type: "layout.panel.add", payload: { panelType: "newsFeed", symbol: "NVDA" } },
+      { type: "layout.panel.add", payload: { panelType: "aiSummary", symbol: "NVDA" } }
+    ]
   }
 });
 const agentAnalysisMessage = formatAgentAnalysisReport(agentAnalysisReport);
@@ -1137,10 +1156,14 @@ assert.match(agentAnalysisMessage, /Headline: News summary/);
 assert.doesNotMatch(agentAnalysisMessage, /Agent findings:/);
 assert.doesNotMatch(agentAnalysisMessage, /Chart Agent: Chart shows a visible breakout\./);
 assert.match(agentAnalysisMessage, /뉴스 provider 미연결: News provider is not configured\./);
-assert.match(agentAnalysisMessage, /거시 provider 미연결: Macro provider is not configured\./);
+assert.doesNotMatch(agentAnalysisMessage, /거시 provider 미연결/);
 assert.match(agentAnalysisMessage, /확인되지 않은 내용:/);
 assert.match(agentAnalysisMessage, /직접 지배\/자회사 관계 근거는 확인되지 않았습니다/);
-assert.match(agentAnalysisMessage, /알림 판단: WATCH - NVDA price surge/);
+assert.doesNotMatch(agentAnalysisMessage, /알림 판단:/);
+assert.match(agentAnalysisMessage, /레이아웃 제안:/);
+assert.match(agentAnalysisMessage, /차트 패널 추가 제안/);
+assert.match(agentAnalysisMessage, /뉴스 패널 추가 제안/);
+assert.match(agentAnalysisMessage, /AI 요약 패널 추가 제안/);
 assert.doesNotMatch(agentAnalysisMessage, /검증 결과: No trading-action guardrail violation detected\./);
 assert.doesNotMatch(agentAnalysisMessage, /검증 경고: No trading-action guardrail violation detected\./);
 assert.doesNotMatch(agentAnalysisMessage, /URL 없는 온톨로지 근거/);

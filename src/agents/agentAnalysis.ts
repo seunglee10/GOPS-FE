@@ -24,6 +24,17 @@ export type NotificationDecision = {
   reason?: string;
 };
 
+export type AgentLayoutCommand = {
+  type: string;
+  payload?: Record<string, unknown>;
+};
+
+export type AgentLayoutProposal = {
+  title: string;
+  rationale?: string;
+  commands: AgentLayoutCommand[];
+};
+
 export type IntentRoute = {
   source: string;
   intentType: string;
@@ -62,6 +73,7 @@ export type AgentAnalysisReport = {
   findings: AgentFinding[];
   providerEvidence: AgentEvidenceItem[];
   notificationDecision?: NotificationDecision | null;
+  layoutProposal?: AgentLayoutProposal | null;
 };
 
 export type AgentAnalysisRequestInput = {
@@ -118,7 +130,8 @@ export function normalizeAgentAnalysisReport(payload: unknown): AgentAnalysisRep
     finalAnswer: normalizeFinalAnswer(source.finalAnswer),
     findings: readArray(source.findings).map(normalizeFinding).filter((item): item is AgentFinding => Boolean(item)),
     providerEvidence: readArray(source.providerEvidence).map(normalizeEvidence).filter((item): item is AgentEvidenceItem => Boolean(item)),
-    notificationDecision: normalizeNotification(source.notificationDecision)
+    notificationDecision: normalizeNotification(source.notificationDecision),
+    layoutProposal: normalizeLayoutProposal(source.layoutProposal)
   };
 }
 
@@ -162,6 +175,14 @@ export function formatAgentAnalysisReport(report: AgentAnalysisReport): string {
   );
   if (verificationFinding) {
     lines.push("", `검증 경고: ${verificationFinding.summary}`);
+  }
+
+  if (report.layoutProposal && report.layoutProposal.commands.length) {
+    lines.push("", "레이아웃 제안:");
+    if (report.layoutProposal.rationale) {
+      lines.push(report.layoutProposal.rationale);
+    }
+    lines.push(...report.layoutProposal.commands.slice(0, 4).map(formatLayoutCommand));
   }
 
   return lines.join("\n");
@@ -298,6 +319,42 @@ function normalizeNotification(value: unknown): NotificationDecision | null {
     message: readString(source.message) ?? undefined,
     reason: readString(source.reason) ?? undefined
   };
+}
+
+function normalizeLayoutProposal(value: unknown): AgentLayoutProposal | null {
+  const source = readObject(value);
+  const title = readString(source?.title);
+  if (!source || !title) {
+    return null;
+  }
+  return {
+    title,
+    rationale: readString(source.rationale) ?? undefined,
+    commands: readArray(source.commands).map(normalizeLayoutCommand).filter((item): item is AgentLayoutCommand => Boolean(item))
+  };
+}
+
+function normalizeLayoutCommand(value: unknown): AgentLayoutCommand | null {
+  const source = readObject(value);
+  const type = readString(source?.type);
+  if (!source || !type) {
+    return null;
+  }
+  return {
+    type,
+    payload: readObject(source.payload) ?? undefined
+  };
+}
+
+function formatLayoutCommand(command: AgentLayoutCommand): string {
+  const panelType = typeof command.payload?.panelType === "string" ? command.payload.panelType : "";
+  const labels: Record<string, string> = {
+    chart: "차트 패널",
+    newsFeed: "뉴스 패널",
+    aiSummary: "AI 요약 패널"
+  };
+  const label = labels[panelType] ?? (panelType || command.type);
+  return `- ${label} 추가 제안`;
 }
 
 function labelForProvider(provider: string): string {

@@ -304,7 +304,7 @@ export default function App() {
 
   const addAgent = () => {
     setAgents((current) => {
-      if (current.length >= 4) {
+      if (current.length >= 3) {
         return current;
       }
 
@@ -313,13 +313,16 @@ export default function App() {
           .map((agent) => Number(agent.id.replace("agent-", "")))
           .filter((value) => Number.isFinite(value))
       );
-      const nextNumber = [1, 2, 3, 4].find((value) => !usedNumbers.has(value)) ?? current.length + 1;
+      const nextNumber = [1, 2, 4].find((value) => !usedNumbers.has(value));
+      if (!nextNumber) {
+        return current;
+      }
       return [
         ...current,
         {
           id: `agent-${String(nextNumber).padStart(2, "0")}`,
-          label: `AI ${String(nextNumber).padStart(2, "0")}`,
-          description: "새 작업 보조 AI입니다.",
+          label: nextNumber === 4 ? "온톨로지 에이전트" : `에이전트 ${String(nextNumber).padStart(2, "0")}`,
+          description: nextNumber === 4 ? "기업 관계와 테마 근거를 분석합니다." : "MVP 분석 흐름에 참여하는 에이전트입니다.",
           iconUrl: `/assets/agent-icons/agent-${String(nextNumber).padStart(2, "0")}.svg`
         }
       ];
@@ -375,6 +378,7 @@ export default function App() {
           onSettingsTabChange={setSettingsTab}
           onEditAgent={setEditingAgentId}
           onUpdateAgent={updateAgent}
+          onSelectedAgentIdsChange={setSelectedAgentIds}
           onAddAgent={addAgent}
           onDeleteAgent={deleteAgent}
           onCloseSystemPanel={closeSystemPanel}

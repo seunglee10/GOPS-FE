@@ -55,10 +55,9 @@ export type AgentOption = {
 export type AgentUpdatePatch = Partial<Pick<AgentOption, "label" | "description" | "iconUrl">>;
 
 export const initialAgentOptions: AgentOption[] = [
-  { id: "agent-01", label: "차트 AI", description: "차트 의도를 해석하고 명령을 제안합니다.", iconUrl: "/assets/agent-icons/agent-01.svg" },
-  { id: "agent-02", label: "뉴스 AI", description: "뉴스와 시장 맥락을 정리합니다.", iconUrl: "/assets/agent-icons/agent-02.svg" },
-  { id: "agent-03", label: "시그널 AI", description: "신호와 조건을 검토합니다.", iconUrl: "/assets/agent-icons/agent-03.svg" },
-  { id: "agent-04", label: "포트폴리오 AI", description: "관심 종목과 포트폴리오를 추적합니다.", iconUrl: "/assets/agent-icons/agent-04.svg" }
+  { id: "agent-01", label: "차트 에이전트", description: "차트 상태와 가격 움직임을 분석합니다.", iconUrl: "/assets/agent-icons/agent-01.svg" },
+  { id: "agent-02", label: "뉴스 에이전트", description: "뉴스 근거와 이벤트 영향을 해석합니다.", iconUrl: "/assets/agent-icons/agent-02.svg" },
+  { id: "agent-04", label: "온톨로지 에이전트", description: "기업 관계와 테마 근거를 분석합니다.", iconUrl: "/assets/agent-icons/agent-04.svg" }
 ];
 
 type SystemAreaProps = {
@@ -78,6 +77,7 @@ type SystemAreaProps = {
   onSettingsTabChange: (tab: SystemMenuTab) => void;
   onEditAgent: (agentId?: string) => void;
   onUpdateAgent: (agentId: string, patch: AgentUpdatePatch) => void;
+  onSelectedAgentIdsChange: (agentIds: string[]) => void;
   onAddAgent: () => void;
   onDeleteAgent: (agentId: string) => void;
   onCloseSystemPanel: () => void;
@@ -118,6 +118,7 @@ export function SystemArea({
   onSettingsTabChange,
   onEditAgent,
   onUpdateAgent,
+  onSelectedAgentIdsChange,
   onAddAgent,
   onDeleteAgent,
   onCloseSystemPanel,
@@ -170,9 +171,11 @@ export function SystemArea({
             chartRuntime={chartRuntime}
             autoApplyEnabled={chartAutoApplyEnabled}
             selectedAgents={selectedAgents}
+            allAgents={agents}
             chartAgentAccess={chartAgentAccess}
             referencedChartTarget={referencedChartTarget}
             symbolUniverse={symbolUniverse}
+            onSelectedAgentIdsChange={onSelectedAgentIdsChange}
             onChartAction={onChartAction}
           />
         </div>
@@ -235,18 +238,22 @@ function AgentChatPanel({
   chartRuntime,
   autoApplyEnabled,
   selectedAgents,
+  allAgents,
   chartAgentAccess,
   referencedChartTarget,
   symbolUniverse,
+  onSelectedAgentIdsChange,
   onChartAction
 }: {
   layout: WorkspaceLayout;
   chartRuntime: ChartRuntimeState;
   autoApplyEnabled: boolean;
   selectedAgents: AgentOption[];
+  allAgents: AgentOption[];
   chartAgentAccess: ReturnType<typeof getChartAgentAccess>;
   referencedChartTarget?: AgentChartReference;
   symbolUniverse: readonly SupportedSymbol[];
+  onSelectedAgentIdsChange: (agentIds: string[]) => void;
   onChartAction: (action: ChartRuntimeAction) => void;
 }) {
   const { authEnabled, user, loading: authLoading, login } = useAuth();
@@ -301,6 +308,20 @@ function AgentChatPanel({
     setSending(false);
     setAgentError(false);
   }, [selectedAgentKey, referencedChartKey]);
+
+  const toggleAgent = (agentId: string) => {
+    const selectedIds = selectedAgents.map((agent) => agent.id);
+    const alreadySelected = selectedIds.includes(agentId);
+    if (alreadySelected && selectedIds.length === 1) {
+      return;
+    }
+    const nextIds = alreadySelected
+      ? selectedIds.filter((id) => id !== agentId)
+      : allAgents
+        .map((agent) => agent.id)
+        .filter((id) => selectedIds.includes(id) || id === agentId);
+    onSelectedAgentIdsChange(nextIds);
+  };
 
   const sendMessage = () => {
     if (authRequired) {
@@ -399,6 +420,23 @@ function AgentChatPanel({
 
   return (
     <div className="agent-chat-panel">
+      <div className="agent-selection-strip" aria-label="에이전트 선택">
+        {allAgents.map((agent) => {
+          const selected = selectedAgents.some((item) => item.id === agent.id);
+          return (
+            <button
+              key={agent.id}
+              type="button"
+              className={selected ? "agent-selection-chip selected" : "agent-selection-chip"}
+              aria-pressed={selected}
+              onClick={() => toggleAgent(agent.id)}
+            >
+              <img src={agent.iconUrl} alt="" />
+              <span>{agent.label}</span>
+            </button>
+          );
+        })}
+      </div>
       <div className={messages.length === 0 ? "agent-chat-messages empty" : "agent-chat-messages"} aria-label="AI 차트 대화">
         {messages.length === 0 && (
           <div className="agent-chat-empty-state">
@@ -467,9 +505,9 @@ function chartProposalStatusMessage(
     : "차트 명령 제안이 패널에서 대기 중입니다.";
 }
 
-function shouldUseAgentAnalysisEndpoint(selectedAgents: AgentOption[], content: string): boolean {
+export function shouldUseAgentAnalysisEndpoint(selectedAgents: AgentOption[], content: string): boolean {
   return selectedAgents.length > 1 ||
-    selectedAgents.some((agent) => agent.id !== "agent-01") ||
+    selectedAgents.some((agent) => ["agent-02", "agent-04"].includes(agent.id)) ||
     isAgentAnalysisIntent(content);
 }
 
@@ -480,9 +518,9 @@ function isAgentAnalysisIntent(content: string): boolean {
     "기사",
     "보도",
     "헤드라인",
-    "거시",
-    "금리",
     "관계",
+    "기업 관계",
+    "온톨로지",
     "공급망",
     "경쟁사",
     "섹터",
@@ -496,8 +534,6 @@ function isAgentAnalysisIntent(content: string): boolean {
     "news",
     "headline",
     "article",
-    "macro",
-    "rate",
     "relationship",
     "ontology",
     "surge",
@@ -506,17 +542,17 @@ function isAgentAnalysisIntent(content: string): boolean {
   ].some((keyword) => normalized.includes(keyword));
 }
 
-function defaultDraftSeedForAgents(selectedAgents: AgentOption[]): string {
+export function defaultDraftSeedForAgents(selectedAgents: AgentOption[]): string {
   if (selectedAgents.length > 1) {
-    return "주가 변동 원인 분석해줘";
+    return "차트, 뉴스, 기업 관계를 종합해서 변동 원인 분석해줘";
   }
   switch (selectedAgents[0]?.id) {
+    case "agent-01":
+      return "차트 분석해줘";
     case "agent-02":
       return "뉴스 보여줘";
-    case "agent-03":
-      return "거시 경제 영향 분석해줘";
     case "agent-04":
-      return "기업 관계 영향 분석해줘";
+      return "기업 관계 분석해줘";
     default:
       return DEFAULT_AGENT_DRAFT_SEED;
   }
@@ -1270,7 +1306,7 @@ function AgentSettings({
           </div>
         );
       })}
-      <button className="add-layout-button" onClick={onAddAgent} disabled={agents.length >= 4}>
+      <button className="add-layout-button" onClick={onAddAgent} disabled={agents.length >= 3}>
         <Plus size={15} /> AI 추가
       </button>
     </div>

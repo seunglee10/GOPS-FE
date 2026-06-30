@@ -1744,12 +1744,56 @@ textarea {
 
 .agent-chat-panel {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(104px, calc(var(--bento-row-height, 124px) - 8px));
+  grid-template-rows: auto minmax(0, 1fr) minmax(104px, calc(var(--bento-row-height, 124px) - 8px));
   min-width: 0;
   min-height: 0;
   padding: 0;
   overflow: hidden;
   background: transparent;
+}
+
+.agent-selection-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px 8px 0;
+  min-width: 0;
+}
+
+.agent-selection-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px;
+  border: 1px solid #d8dde8;
+  border-radius: 6px;
+  background: #fff;
+  color: #273142;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agent-selection-chip.selected {
+  border-color: #2c6bed;
+  background: #eef4ff;
+  color: #123f9d;
+}
+
+.agent-selection-chip img {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.agent-selection-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .agent-chat-messages {
