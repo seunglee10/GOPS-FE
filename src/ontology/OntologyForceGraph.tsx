@@ -48,6 +48,7 @@ type SimNode = d3.SimulationNodeDatum & {
   count?: number;
   __wasPinned?: boolean;
   __moved?: boolean;
+  __sized?: boolean;
 };
 
 type SimLink = { source: string | SimNode; target: string | SimNode; kind: "chip" | "control" | "cross" };
@@ -202,7 +203,6 @@ function createGraphController(
     });
   svg.call(zoomBehavior);
   const hullLayer = root.append("g");
-  const memberLinkLayer = root.append("g");
   const linkLayer = root.append("g");
   const nodeLayer = root.append("g");
 
@@ -233,7 +233,9 @@ function createGraphController(
 
   // 내용물 경계에 맞춰 자동 줌 — 노드가 적을 땐 확대, 펼쳐지면 축소.
   // 사용자가 직접 줌/팬 하면 이후 자동 조정은 하지 않는다.
-  function fitView(): void {
+  let lastFitSignature = "";
+
+  function fitView(immediate: boolean): void {
     const nodes = simulation.nodes();
     if (!nodes.length) {
       return;
@@ -264,18 +266,18 @@ function createGraphController(
     const scale = Math.max(0.4, Math.min(2.2, Math.min(LOGICAL_WIDTH / width, LOGICAL_HEIGHT / height)));
     const tx = LOGICAL_WIDTH / 2 - (scale * (minX + maxX)) / 2;
     const ty = LOGICAL_HEIGHT / 2 - (scale * (minY + maxY)) / 2;
-    svg.transition().duration(420).call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    svg.transition().duration(immediate ? 0 : 420).call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   }
 
-  function scheduleFit(): void {
+  function scheduleFit(immediate: boolean): void {
     if (fitTimer !== undefined) {
       window.clearTimeout(fitTimer);
     }
     fitTimer = window.setTimeout(() => {
       if (!userAdjustedView) {
-        fitView();
+        fitView(immediate);
       }
-    }, 650);
+    }, immediate ? 80 : 650);
   }
 
   function themeMemberNodes(theme: string): SimNode[] {
@@ -337,7 +339,11 @@ function createGraphController(
     const nodes: SimNode[] = [];
     const links: SimLink[] = [];
     for (const ticker of visibleStocks) {
-      const node = getNode("s:" + ticker, { kind: "stock", label: ticker, r: stockRadius(ticker) });
+      const node = getNode("s:" + ticker, { kind: "stock", label: ticker });
+      if (!node.__sized) {
+        node.r = stockRadius(ticker);
+        node.__sized = true;
+      }
       if (ticker === model.focal && visibleStocks.size === 1) {
         node.fx = LOGICAL_WIDTH / 2;
         node.fy = LOGICAL_HEIGHT / 2;
@@ -412,16 +418,28 @@ function createGraphController(
 
   function expandStock(id: string): void {
     const ticker = id.slice(2);
+    let revealed = false;
     for (const theme of themesOf(ticker)) {
       if (!expandedThemes.has(theme) && !chips.has(theme)) {
         chips.set(theme, ticker);
+        revealed = true;
       }
     }
-    childrenOf(ticker).forEach((company) => visibleCompanies.add(company));
-    crossPartnersOf(ticker).forEach((partner) => visibleStocks.add(partner));
+    childrenOf(ticker).forEach((company) => {
+      if (!visibleCompanies.has(company)) {
+        visibleCompanies.add(company);
+        revealed = true;
+      }
+    });
+    crossPartnersOf(ticker).forEach((partner) => {
+      if (!visibleStocks.has(partner)) {
+        visibleStocks.add(partner);
+        revealed = true;
+      }
+    });
     selectedId = id;
     onSelect(ticker);
-    update(0.35);
+    update(revealed ? 0.35 : 0.03);
   }
 
   // ---------- 렌더링 ----------
@@ -437,7 +455,13 @@ function createGraphController(
         .strength(0.5)
     );
     simulation.alpha(alpha).restart();
-    scheduleFit();
+    // 노드 구성이 실제로 바뀐 경우에만 auto-fit — 선택/시세 갱신으로는 배율이 출렁이지 않게
+    const signature = nodes.map((node) => node.id).sort().join(",");
+    if (signature !== lastFitSignature) {
+      const firstFit = lastFitSignature === "";
+      lastFitSignature = signature;
+      scheduleFit(firstFit);
+    }
 
     linkLayer
       .selectAll<SVGLineElement, SimLink>("line")
@@ -554,33 +578,6 @@ function createGraphController(
         hulls.push({ theme, cx: geom.cx, cy: geom.cy, r: geom.r });
       }
     }
-
-    // 펼쳐진 테마의 멤버들 사이를 옅은 점선으로 연결 (관계의 거미줄 느낌, 힘에는 영향 없음)
-    const memberPairs = new Map<string, { x1: number; y1: number; x2: number; y2: number }>();
-    for (const theme of expandedThemes) {
-      const members = (model.themes.get(theme) ?? [])
-        .filter((ticker) => byId.has("s:" + ticker))
-        .map((ticker) => byId.get("s:" + ticker) as SimNode);
-      for (let i = 0; i < members.length; i += 1) {
-        for (let j = i + 1; j < members.length; j += 1) {
-          const a = members[i];
-          const b = members[j];
-          const key = a.id < b.id ? a.id + "|" + b.id : b.id + "|" + a.id;
-          if (!memberPairs.has(key)) {
-            memberPairs.set(key, { x1: a.x ?? 0, y1: a.y ?? 0, x2: b.x ?? 0, y2: b.y ?? 0 });
-          }
-        }
-      }
-    }
-    memberLinkLayer
-      .selectAll<SVGLineElement, [string, { x1: number; y1: number; x2: number; y2: number }]>("line")
-      .data(Array.from(memberPairs.entries()), (d) => d[0])
-      .join("line")
-      .attr("class", "ofg-member-link")
-      .attr("x1", (d) => d[1].x1)
-      .attr("y1", (d) => d[1].y1)
-      .attr("x2", (d) => d[1].x2)
-      .attr("y2", (d) => d[1].y2);
 
     const hullGroups = hullLayer
       .selectAll<SVGGElement, HullDatum>("g.ofg-hull")

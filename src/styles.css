@@ -2530,13 +2530,6 @@ h2 {
   to { transform: rotate(360deg); }
 }
 
-.ofg-member-link {
-  stroke: rgb(var(--gops-ink-rgb) / 0.16);
-  stroke-width: 1;
-  stroke-dasharray: 3 5;
-  pointer-events: none;
-}
-
 /* ===== Ontology panel: 그래프 전체 사용, 근거는 토글 오버레이 ===== */
 .ontology-panel { grid-template-rows: minmax(0, 1fr); }
 .ofg-legend-hint {
