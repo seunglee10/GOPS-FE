@@ -202,6 +202,7 @@ function createGraphController(
     });
   svg.call(zoomBehavior);
   const hullLayer = root.append("g");
+  const memberLinkLayer = root.append("g");
   const linkLayer = root.append("g");
   const nodeLayer = root.append("g");
 
@@ -553,6 +554,33 @@ function createGraphController(
         hulls.push({ theme, cx: geom.cx, cy: geom.cy, r: geom.r });
       }
     }
+
+    // 펼쳐진 테마의 멤버들 사이를 옅은 점선으로 연결 (관계의 거미줄 느낌, 힘에는 영향 없음)
+    const memberPairs = new Map<string, { x1: number; y1: number; x2: number; y2: number }>();
+    for (const theme of expandedThemes) {
+      const members = (model.themes.get(theme) ?? [])
+        .filter((ticker) => byId.has("s:" + ticker))
+        .map((ticker) => byId.get("s:" + ticker) as SimNode);
+      for (let i = 0; i < members.length; i += 1) {
+        for (let j = i + 1; j < members.length; j += 1) {
+          const a = members[i];
+          const b = members[j];
+          const key = a.id < b.id ? a.id + "|" + b.id : b.id + "|" + a.id;
+          if (!memberPairs.has(key)) {
+            memberPairs.set(key, { x1: a.x ?? 0, y1: a.y ?? 0, x2: b.x ?? 0, y2: b.y ?? 0 });
+          }
+        }
+      }
+    }
+    memberLinkLayer
+      .selectAll<SVGLineElement, [string, { x1: number; y1: number; x2: number; y2: number }]>("line")
+      .data(Array.from(memberPairs.entries()), (d) => d[0])
+      .join("line")
+      .attr("class", "ofg-member-link")
+      .attr("x1", (d) => d[1].x1)
+      .attr("y1", (d) => d[1].y1)
+      .attr("x2", (d) => d[1].x2)
+      .attr("y2", (d) => d[1].y2);
 
     const hullGroups = hullLayer
       .selectAll<SVGGElement, HullDatum>("g.ofg-hull")

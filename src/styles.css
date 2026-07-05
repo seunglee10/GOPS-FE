@@ -2529,3 +2529,10 @@ h2 {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.ofg-member-link {
+  stroke: rgb(var(--gops-ink-rgb) / 0.16);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  pointer-events: none;
+}
