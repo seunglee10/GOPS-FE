@@ -127,6 +127,16 @@ function changeIntensity(change: number): number {
   return Math.min(1, Math.abs(change) / 3) * 0.75 + 0.25;
 }
 
+// 문자열 -> [0,1) 결정적 해시. 같은 id는 항상 같은 초기 위치를 갖는다.
+function hash01(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 1000) / 1000;
+}
+
 function createGraphController(
   svgElement: SVGSVGElement,
   model: OntologyModel,
@@ -327,8 +337,8 @@ function createGraphController(
         kind: "stock",
         label: "",
         r: 10,
-        x: LOGICAL_WIDTH / 2 + (Math.random() - 0.5) * 40,
-        y: LOGICAL_HEIGHT / 2 + (Math.random() - 0.5) * 40,
+        x: LOGICAL_WIDTH / 2 + Math.cos(hash01(id) * Math.PI * 2) * 24,
+        y: LOGICAL_HEIGHT / 2 + Math.sin(hash01(id) * Math.PI * 2) * 24,
         ...init
       } as SimNode);
     }
@@ -353,21 +363,58 @@ function createGraphController(
       }
       nodes.push(node);
     }
+    const chipsByAnchor = new Map<string, string[]>();
     for (const [theme, anchor] of chips) {
       if (!visibleStocks.has(anchor)) {
         continue;
       }
-      nodes.push(getNode("t:" + theme, { kind: "chip", label: theme, count: (model.themes.get(theme) ?? []).length, r: 26 }));
-      links.push({ source: "s:" + anchor, target: "t:" + theme, kind: "chip" });
+      if (!chipsByAnchor.has(anchor)) {
+        chipsByAnchor.set(anchor, []);
+      }
+      chipsByAnchor.get(anchor)?.push(theme);
     }
+    chipsByAnchor.forEach((chipThemes, anchor) => {
+      chipThemes.sort();
+      const anchorNode = nodeCache.get("s:" + anchor);
+      chipThemes.forEach((theme, index) => {
+        const isNew = !nodeCache.has("t:" + theme);
+        const node = getNode("t:" + theme, { kind: "chip", label: theme, count: (model.themes.get(theme) ?? []).length, r: 26 });
+        if (isNew && anchorNode) {
+          // 칩은 항상 기준 종목의 "위쪽" 부채꼴에 이름순으로 생성
+          const angle = -Math.PI / 2 + (index - (chipThemes.length - 1) / 2) * 0.55;
+          node.x = (anchorNode.x ?? 0) + Math.cos(angle) * 115;
+          node.y = (anchorNode.y ?? 0) + Math.sin(angle) * 115;
+        }
+        nodes.push(node);
+        links.push({ source: "s:" + anchor, target: "t:" + theme, kind: "chip" });
+      });
+    });
+    const companiesByParent = new Map<string, string[]>();
     for (const company of visibleCompanies) {
       const parent = model.companies.get(company);
-      if (!parent || !visibleStocks.has(parent)) {
-        continue;
+      if (parent && visibleStocks.has(parent)) {
+        if (!companiesByParent.has(parent)) {
+          companiesByParent.set(parent, []);
+        }
+        companiesByParent.get(parent)?.push(company);
       }
-      nodes.push(getNode("c:" + company, { kind: "company", label: company, r: 12 }));
-      links.push({ source: "s:" + parent, target: "c:" + company, kind: "control" });
     }
+    companiesByParent.forEach((companyNames, parent) => {
+      companyNames.sort();
+      const parentNode = nodeCache.get("s:" + parent);
+      companyNames.forEach((company, index) => {
+        const isNew = !nodeCache.has("c:" + company);
+        const node = getNode("c:" + company, { kind: "company", label: company, r: 12 });
+        if (isNew && parentNode) {
+          // 자회사는 항상 모회사의 "아래쪽" 부채꼴에 이름순으로 생성
+          const angle = Math.PI / 2 + (index - (companyNames.length - 1) / 2) * 0.5;
+          node.x = (parentNode.x ?? 0) + Math.cos(angle) * 95;
+          node.y = (parentNode.y ?? 0) + Math.sin(angle) * 95;
+        }
+        nodes.push(node);
+        links.push({ source: "s:" + parent, target: "c:" + company, kind: "control" });
+      });
+    });
     for (const cross of model.crossLinks) {
       if (visibleStocks.has(cross.a) && visibleStocks.has(cross.b)) {
         links.push({ source: "s:" + cross.a, target: "s:" + cross.b, kind: "cross" });
@@ -380,14 +427,16 @@ function createGraphController(
   function expandTheme(theme: string, origin: SimNode): void {
     expandedThemes.add(theme);
     chips.delete(theme);
-    for (const ticker of model.themes.get(theme) ?? []) {
-      if (!visibleStocks.has(ticker)) {
-        visibleStocks.add(ticker);
-        const node = getNode("s:" + ticker, {});
-        node.x = (origin.x ?? LOGICAL_WIDTH / 2) + (Math.random() - 0.5) * 50;
-        node.y = (origin.y ?? LOGICAL_HEIGHT / 2) + (Math.random() - 0.5) * 50;
-      }
-    }
+    const newcomers = (model.themes.get(theme) ?? []).filter((ticker) => !visibleStocks.has(ticker));
+    // 시총 큰 순으로 12시부터 시계방향 링 배치 — 생성 방향이 항상 일정
+    newcomers.sort((a, b) => ((getQuote(b)?.marketCap ?? 0) - (getQuote(a)?.marketCap ?? 0)) || a.localeCompare(b));
+    newcomers.forEach((ticker, index) => {
+      visibleStocks.add(ticker);
+      const node = getNode("s:" + ticker, {});
+      const angle = (index / Math.max(1, newcomers.length)) * Math.PI * 2 - Math.PI / 2;
+      node.x = (origin.x ?? LOGICAL_WIDTH / 2) + Math.cos(angle) * 75;
+      node.y = (origin.y ?? LOGICAL_HEIGHT / 2) + Math.sin(angle) * 75;
+    });
     update(0.45);
   }
 
