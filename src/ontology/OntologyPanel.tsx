@@ -23,6 +23,7 @@ export function OntologyPanel({ symbol, onSelectSymbol }: OntologyPanelProps) {
   const [evidence, setEvidence] = useState<AgentEvidenceItem[]>([]);
   const [quotes, setQuotes] = useState<Map<string, Sp500UniverseItem>>(new Map());
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showEvidence, setShowEvidence] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -136,14 +137,28 @@ export function OntologyPanel({ symbol, onSelectSymbol }: OntologyPanelProps) {
         <RefreshCw size={13} className={isLoading ? "is-spinning" : undefined} />
       </button>
       <OntologyForceGraph graph={graph} getQuote={getQuote} onSelectSymbol={onSelectSymbol} />
-      <ol className="ontology-evidence-list" aria-label="Ontology evidence">
-        {ontologyEvidence.slice(0, 4).map((item, index) => (
-          <li key={`${item.title ?? "evidence"}-${index}`}>
-            <strong>{item.title ?? "Ontology evidence"}</strong>
-            {item.summary && <span>{item.summary}</span>}
-          </li>
-        ))}
-      </ol>
+      {ontologyEvidence.length > 0 && (
+        <button
+          type="button"
+          className="ontology-evidence-toggle"
+          onClick={() => setShowEvidence((current) => !current)}
+          aria-expanded={showEvidence}
+        >
+          근거 {ontologyEvidence.length}건 {showEvidence ? "닫기" : "보기"}
+        </button>
+      )}
+      {showEvidence && (
+        <div className="ontology-evidence-overlay">
+          <ol className="ontology-evidence-list" aria-label="Ontology evidence">
+            {ontologyEvidence.slice(0, 8).map((item, index) => (
+              <li key={`${item.title ?? "evidence"}-${index}`}>
+                <strong>{item.title ?? "Ontology evidence"}</strong>
+                {item.summary && <span>{item.summary}</span>}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }

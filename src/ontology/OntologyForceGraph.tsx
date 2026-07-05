@@ -760,7 +760,13 @@ export function OntologyForceGraph({
           </button>
         </div>
       )}
-      <div className="ofg-legend">초록=상승 · 빨강=하락 · 진하기=등락 폭 · 원 크기=시총 · 점선 원=테마(점선 드래그=이동)</div>
+      <div
+        className="ofg-legend-hint"
+        title="초록=상승 · 빨강=하락 · 진하기=등락 폭 · 원 크기=시총 · 점선 원=테마 (점선 드래그=테마 이동) · 칩 클릭=펼치기 · 종목 클릭=관계 확장"
+        aria-label="범례"
+      >
+        ⓘ
+      </div>
     </div>
   );
 }

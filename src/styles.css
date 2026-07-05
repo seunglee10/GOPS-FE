@@ -2536,3 +2536,51 @@ h2 {
   stroke-dasharray: 3 5;
   pointer-events: none;
 }
+
+/* ===== Ontology panel: 그래프 전체 사용, 근거는 토글 오버레이 ===== */
+.ontology-panel { grid-template-rows: minmax(0, 1fr); }
+.ofg-legend-hint {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 5;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-muted);
+  font-size: 11px;
+  cursor: help;
+  background: var(--gops-background);
+}
+.ofg-legend-hint:hover { color: var(--gops-ink); border-color: var(--gops-ink); }
+.ontology-evidence-toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+  background: var(--gops-background);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-medium);
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.ontology-evidence-toggle:hover { border-color: var(--gops-ink); color: var(--gops-ink); }
+.ontology-evidence-overlay {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 42px;
+  z-index: 6;
+  max-height: 48%;
+  overflow-y: auto;
+  background: var(--gops-background);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 rgb(var(--gops-ink-rgb) / 0.18);
+  padding: 10px 12px;
+}
