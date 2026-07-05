@@ -150,7 +150,7 @@ export function OntologyPanel({ symbol, onSelectSymbol }: OntologyPanelProps) {
       {showEvidence && (
         <div className="ontology-evidence-overlay">
           <ol className="ontology-evidence-list" aria-label="Ontology evidence">
-            {ontologyEvidence.slice(0, 8).map((item, index) => (
+            {ontologyEvidence.map((item, index) => (
               <li key={`${item.title ?? "evidence"}-${index}`}>
                 <strong>{item.title ?? "Ontology evidence"}</strong>
                 {item.summary && <span>{item.summary}</span>}
