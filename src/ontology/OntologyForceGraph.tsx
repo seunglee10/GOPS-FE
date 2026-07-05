@@ -189,10 +189,17 @@ function createGraphController(
   const svg = d3.select(svgElement);
   svg.selectAll("*").remove();
   const root = svg.append("g");
+  let userAdjustedView = false;
+  let fitTimer: number | undefined;
   const zoomBehavior = d3
     .zoom<SVGSVGElement, unknown>()
-    .scaleExtent([0.5, 2.5])
-    .on("zoom", (event) => root.attr("transform", event.transform.toString()));
+    .scaleExtent([0.4, 2.5])
+    .on("zoom", (event) => {
+      if (event.sourceEvent) {
+        userAdjustedView = true;
+      }
+      root.attr("transform", event.transform.toString());
+    });
   svg.call(zoomBehavior);
   const hullLayer = root.append("g");
   const linkLayer = root.append("g");
@@ -221,6 +228,53 @@ function createGraphController(
     const cy = d3.mean(members, (m) => m.y ?? 0) ?? 0;
     const r = Math.max(48, (d3.max(members, (m) => Math.hypot((m.x ?? 0) - cx, (m.y ?? 0) - cy) + m.r) ?? 0) + 24);
     return { cx, cy, r, members };
+  }
+
+  // 내용물 경계에 맞춰 자동 줌 — 노드가 적을 땐 확대, 펼쳐지면 축소.
+  // 사용자가 직접 줌/팬 하면 이후 자동 조정은 하지 않는다.
+  function fitView(): void {
+    const nodes = simulation.nodes();
+    if (!nodes.length) {
+      return;
+    }
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const node of nodes) {
+      minX = Math.min(minX, (node.x ?? 0) - node.r);
+      maxX = Math.max(maxX, (node.x ?? 0) + node.r);
+      minY = Math.min(minY, (node.y ?? 0) - node.r);
+      maxY = Math.max(maxY, (node.y ?? 0) + node.r);
+    }
+    for (const theme of expandedThemes) {
+      const geom = hullGeometry(theme, byId);
+      if (geom) {
+        minX = Math.min(minX, geom.cx - geom.r);
+        maxX = Math.max(maxX, geom.cx + geom.r);
+        minY = Math.min(minY, geom.cy - geom.r - 20);
+        maxY = Math.max(maxY, geom.cy + geom.r);
+      }
+    }
+    const pad = 26;
+    const width = Math.max(1, maxX - minX + pad * 2);
+    const height = Math.max(1, maxY - minY + pad * 2);
+    const scale = Math.max(0.4, Math.min(2.2, Math.min(LOGICAL_WIDTH / width, LOGICAL_HEIGHT / height)));
+    const tx = LOGICAL_WIDTH / 2 - (scale * (minX + maxX)) / 2;
+    const ty = LOGICAL_HEIGHT / 2 - (scale * (minY + maxY)) / 2;
+    svg.transition().duration(420).call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+  }
+
+  function scheduleFit(): void {
+    if (fitTimer !== undefined) {
+      window.clearTimeout(fitTimer);
+    }
+    fitTimer = window.setTimeout(() => {
+      if (!userAdjustedView) {
+        fitView();
+      }
+    }, 650);
   }
 
   function themeMemberNodes(theme: string): SimNode[] {
@@ -382,6 +436,7 @@ function createGraphController(
         .strength(0.5)
     );
     simulation.alpha(alpha).restart();
+    scheduleFit();
 
     linkLayer
       .selectAll<SVGLineElement, SimLink>("line")
@@ -587,6 +642,9 @@ function createGraphController(
         .text((d) => (d.kind === "stock" ? pctText(d.label) : ""));
     },
     destroy(): void {
+      if (fitTimer !== undefined) {
+        window.clearTimeout(fitTimer);
+      }
       simulation.stop();
       svg.on("click", null);
       svg.on(".zoom", null);
