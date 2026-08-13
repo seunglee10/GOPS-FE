@@ -85,15 +85,10 @@ layout:
   control-size: 36px
   app-ui-scale: 0.96
   grid-gutter: "clamped 6px to 10px, based on viewport width"
-  workspace-top-inset: 52px
-  workspace-bottom-inset: 64px
 
 radius:
   app-glass: 8px
   panel: 8px
-  small-overlay: 6px
-  chat-message: 14px
-  pill: 999px
 
 panel:
   padding: 8px
@@ -120,6 +115,33 @@ typography:
   pricing-section: "28px / 475 / 1.2 / 0"
   pricing-card-title: "20px / 475 / 1.3 / 0"
 ```
+
+### 토큰이 아닌 관용값
+
+다음 값은 CSS 변수가 아니라 각 규칙에 직접 적는다. 디자인 결정이 아니라
+고정된 표기이므로 토큰으로 승격하지 않는다.
+
+| 값 | 의미 | 사용처 |
+| --- | --- | --- |
+| `border-radius: 999px` | 완전히 둥근 모서리(pill). 실질적으로 변하지 않는 관용값 | 141곳 |
+| `border-radius: 6px` | 작은 오버레이·칩 모서리 | 75곳 |
+| `border-radius: 14px` | 챗 말풍선 모서리 | 3곳 |
+
+패널과 앱 셸의 모서리는 이와 별개로 `--app-glass-radius`(8px)와
+`--surface-radius`를 쓴다. 새 패널 표면에는 관용값 대신 이 토큰을 쓴다.
+
+### `header` 색
+
+`colors.header`는 `--framer-header`(원색) → `--coinbase-header`(의미) 두 단계
+토큰이다. 이 톤은 두 가지 역할을 겸한다.
+
+- 앱 크롬: `.workspace-top-nav`, `.workspace-bottom-nav .agent-box`,
+  `.compare-cockpit-tabs`, AI 코치 셸 footer
+- 캔버스보다 어두운 오버레이: tooltip, 비교 사이드바 backdrop,
+  점수 분해 패널
+
+두 역할 모두 같은 값을 쓰므로 토큰 하나로 다룬다. 한쪽만 바꿔야 하는 상황이
+생기면 그때 역할을 분리하고 이 문서를 함께 고친다.
 
 ## Typography
 
