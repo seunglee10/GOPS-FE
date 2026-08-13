@@ -2,6 +2,7 @@ import { defaultVisibleBarsForInterval, normalizeChartInterval, type ChartInterv
 import type { ChartDocument, ChartDocumentSnapshot, DrawingEntity } from "./types";
 import { DEFAULT_CHART_SYMBOL } from "./symbols";
 import { getDefaultChartStyle, normalizeChartStyle } from "./theme";
+import { normalizeParallelLineCount } from "./drawingGeometry";
 import { latestCandleRightOffset } from "./viewport";
 
 export function createChartDocument(id: string, symbol = DEFAULT_CHART_SYMBOL, timeframe: ChartInterval | string = "1m"): ChartDocument {
@@ -165,8 +166,3 @@ function withEventLayerDefaults(layers: ChartDocument["layers"]): ChartDocument[
       };
 }
 
-function normalizeParallelLineCount(value: unknown): number {
-  return Math.max(2, Math.min(10, Math.round(
-    typeof value === "number" && Number.isFinite(value) ? value : 3
-  )));
-}

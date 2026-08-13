@@ -2,6 +2,7 @@ import { chartCapabilities } from "./capabilities";
 import { makeChartCommand } from "./commands";
 import { normalizeSupportedSymbol } from "./symbols";
 import type { CandleData, ChartCommand, ChartCommandType, ChartDataStatus, ChartDocument, ChartProposal, RenderScene, StreamStatus } from "./types";
+import { readObject } from "./json";
 
 const proposalCommandTypes: ChartCommandType[] = [
   "chart.symbol.set",
@@ -217,10 +218,6 @@ function normalizeProposalCommand(value: unknown, target: { panelId: string; cha
 
 function readCommandType(value: unknown): ChartCommandType | null {
   return proposalCommandTypes.includes(value as ChartCommandType) ? (value as ChartCommandType) : null;
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
 function readString(value: unknown): string | null {
