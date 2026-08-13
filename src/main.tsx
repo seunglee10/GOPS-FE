@@ -6,7 +6,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 import { NotificationPreferencesProvider } from "./alerts/notificationPreferences";
 import { PaperAccountProvider } from "./orders/PaperAccountProvider";
 import { ChartTradeHistoryProvider } from "./orders/ChartTradeHistoryProvider";
-import { AiCoachRuntimeProvider } from "./components/ai-coach/AiCoachRuntimeProvider";
+import { AiCoachRuntimeProvider } from "./agent/ai-coach/AiCoachRuntimeProvider";
 import { syncChartEngineThemeFromCss } from "./theme/colors";
 import "./styles.css";
 import "./chart-features.css";

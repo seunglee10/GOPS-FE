@@ -319,7 +319,7 @@ assert.deepEqual(groupedMarkerInsights.get(groupedSellMarker.id), {
 });
 
 const tradeOverlaySource = readFileSync(
-  fileURLToPath(new URL("../src/components/ChartTradeOverlay.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/chart/ChartTradeOverlay.tsx", import.meta.url)),
   "utf-8"
 );
 assert.match(tradeOverlaySource, /role="tooltip"/);

@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { companyJournalAnalystActionsForDisplay } from "../src/components/CompanyJournalPanel";
+import { companyJournalAnalystActionsForDisplay } from "../src/company-journal/CompanyJournalPanel";
 import {
   fetchCompanyJournalEvidence,
   normalizeCompanyJournalAnalystSummary,
   type CompanyJournalAnalystSummary
-} from "../src/components/companyJournalApi";
+} from "../src/company-journal/companyJournalApi";
 
 const analystSummary: CompanyJournalAnalystSummary = {
   statement: "JP모건은 투자의견을 상향했고 시장 평균 목표주가는 200달러입니다.",

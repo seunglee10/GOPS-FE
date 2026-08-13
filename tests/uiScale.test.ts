@@ -4,11 +4,11 @@ import { fileURLToPath } from "node:url";
 
 const appSource = readFileSync(fileURLToPath(new URL("../src/App.tsx", import.meta.url)), "utf-8");
 const bottomCommandBarSource = readFileSync(
-  fileURLToPath(new URL("../src/components/BottomCommandBar.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/agent/BottomCommandBar.tsx", import.meta.url)),
   "utf-8"
 );
 const panelWorkspaceSource = readFileSync(
-  fileURLToPath(new URL("../src/components/PanelWorkspace.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/layout/PanelWorkspace.tsx", import.meta.url)),
   "utf-8"
 );
 

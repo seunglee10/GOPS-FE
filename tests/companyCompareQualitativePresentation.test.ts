@@ -5,7 +5,7 @@ import {
   buildBusinessModelHighlights,
   buildRevenueHighlights,
   buildRiskHighlights
-} from "../src/companyCompare/companyCompareQualitativePresentation";
+} from "../src/company-compare/companyCompareQualitativePresentation";
 
 const nvdaBusiness = {
   kind: "10k-business" as const,
@@ -74,7 +74,7 @@ assert.deepEqual(buildBusinessHighlights(undefined), []);
 assert.deepEqual(buildRiskHighlights(""), []);
 
 const panelSource = await readFile(
-  new URL("../src/companyCompare/CompanyComparePanelV2.tsx", import.meta.url),
+  new URL("../src/company-compare/CompanyComparePanelV2.tsx", import.meta.url),
   "utf8"
 );
 assert.match(panelSource, /matrixRow\("사업 모델"/);

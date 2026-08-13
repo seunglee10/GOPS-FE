@@ -1,4 +1,4 @@
-import type { AgentAnalysisReport } from "../agents/agentAnalysis";
+import type { AgentAnalysisReport } from "./agentAnalysis";
 
 export type AgentHeaderNoticeTone = "success" | "info" | "error";
 

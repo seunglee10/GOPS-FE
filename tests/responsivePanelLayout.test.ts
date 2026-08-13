@@ -20,7 +20,7 @@ import {
   MAX_COMPANY_COMPARE_SYMBOLS,
   MAX_COMPANY_COMPARE_TOTAL_SYMBOLS,
   normalizeCompanyCompareSymbols
-} from "../src/companyCompare/companyCompareSelection";
+} from "../src/company-compare/companyCompareSelection";
 
 const baseMetrics = { topInset: 52, uiScale: 1.6 };
 

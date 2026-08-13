@@ -3,7 +3,7 @@ import {
   normalizeFinalAnswer,
   type AgentAnalysisReport,
   type FinalAnswer
-} from "../agents/agentAnalysis";
+} from "./agentAnalysis";
 import {
   addPanelSlotAtGridRect,
   canPlaceGridRect,

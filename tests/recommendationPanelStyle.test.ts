@@ -6,7 +6,7 @@ const [workspaceStyles, panelSource, profileSource, apiSource, panelWorkspaceSou
   readFile(new URL("../src/recommendations/StockDiscoveryPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/recommendations/ScoreProfileManager.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/recommendations/recommendationApi.ts", import.meta.url), "utf8"),
-  readFile(new URL("../src/components/PanelWorkspace.tsx", import.meta.url), "utf8")
+  readFile(new URL("../src/layout/PanelWorkspace.tsx", import.meta.url), "utf8")
 ]);
 
 assert.match(panelSource, /종목 목록/, "the unified panel exposes a discovery tab");

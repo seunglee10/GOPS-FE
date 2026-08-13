@@ -5,6 +5,26 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+
+// Panels that used to sit in src/components and now live in their domain folder. The
+// manualChunks folder rules would otherwise pull them into feature chunks they never
+// belonged to, so they are kept in the entry chunk explicitly.
+const RELOCATED_PANELS = [
+  "/src/agent/AiInvestmentCoachPanel",
+  "/src/agent/AnalysisAnswerPage",
+  "/src/agent/WildPanelAnswerPage",
+  "/src/agent/ContextualAgentAskButton",
+  "/src/agent/BottomCommandBar",
+  "/src/agent/ai-coach/",
+  "/src/alerts/NotificationCenterPanel",
+  "/src/layout/PanelContentRenderer",
+  "/src/layout/PanelWorkspace",
+  "/src/layout/PresetDock",
+  "/src/layout/WorkspacePanelFrame",
+  "/src/layout/PlacementPickerOverlay",
+  "/src/layout/panelWorkspaceGeometry",
+];
+
 const replayCandleModuleId = "virtual:gops-ai-coach-replay-candles";
 const resolvedReplayCandleModuleId = `\0${replayCandleModuleId}`;
 
@@ -65,20 +85,26 @@ export default defineConfig(({ mode }) => {
             if (id.includes("/apps/chart-engine/")) {
               return "chart-engine";
             }
+            // Panels relocated out of src/components into their domain folders stay in the
+            // entry chunk, as they were before the move. Letting the folder rules below claim
+            // them makes the feature chunks reference each other and rollup reports cycles.
+            if (RELOCATED_PANELS.some((name) => id.includes(name))) {
+              return undefined;
+            }
             if (
-              id.includes("/src/components/CompanySummaryPanel")
-              || id.includes("/src/components/CompanyJournalPanel")
-              || id.includes("/src/components/NewsPanel")
-              || id.includes("/src/components/NewsFlipCard")
-              || id.includes("/src/components/PortfolioHoldingsPanel")
-              || id.includes("/src/components/portfolioHoldingsApi")
+              id.includes("/src/company-journal/CompanySummaryPanel")
+              || id.includes("/src/company-journal/CompanyJournalPanel")
+              || id.includes("/src/news/NewsPanel")
+              || id.includes("/src/news/NewsFlipCard")
+              || id.includes("/src/portfolio/PortfolioHoldingsPanel")
+              || id.includes("/src/portfolio/portfolioHoldingsApi")
             ) {
               return "feature-dashboard";
             }
             if (id.includes("/src/market/sp500Universe.seed")) {
               return "market-universe";
             }
-            if (id.includes("/src/agent/") || id.includes("/src/agents/")) {
+            if (id.includes("/src/agent/")) {
               return "feature-agent";
             }
             if (id.includes("/src/ontology/")) {

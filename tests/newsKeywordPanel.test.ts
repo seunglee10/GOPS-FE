@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {
   NEWS_KEYWORD_REFRESH_MS,
   normalizeNewsKeywordResponse
-} from "../src/components/NewsKeywordPanel";
+} from "../src/news/NewsKeywordPanel";
 
 assert.equal(NEWS_KEYWORD_REFRESH_MS, 5 * 60_000);
 

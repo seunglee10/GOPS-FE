@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import type { AgentAnalysisReport } from "../src/agents/agentAnalysis";
+import type { AgentAnalysisReport } from "../src/agent/agentAnalysis";
 import {
   restoreTiledPanelStateSnapshot,
   serializeTiledPanelState,

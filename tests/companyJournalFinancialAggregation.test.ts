@@ -8,19 +8,19 @@ import {
   formatCompanyJournalAnalystOpinion,
   mergeCompanyJournalValuationPrices,
   totalLiabilitiesFor
-} from "../src/components/CompanyJournalSummaryPanel";
+} from "../src/company-journal/CompanyJournalSummaryPanel";
 import {
   companyJournalEvidencePriceChange,
   financialYearsForContext,
   nearestFinancialYear
-} from "../src/components/CompanyJournalPanel";
-import { buildCompanyJournalDiagnosis } from "../src/components/companyJournalDiagnosis";
-import { buildCompanyJournalReading } from "../src/components/companyJournalReading";
+} from "../src/company-journal/CompanyJournalPanel";
+import { buildCompanyJournalDiagnosis } from "../src/company-journal/companyJournalDiagnosis";
+import { buildCompanyJournalReading } from "../src/company-journal/companyJournalReading";
 import {
   dateLabels,
   normalizePerformanceSeries,
   performanceVolumeBarGeometry
-} from "../src/components/CompanyJournalPerformanceChart";
+} from "../src/company-journal/CompanyJournalPerformanceChart";
 import { allGlossaryEntries } from "../src/glossary/stockGlossary";
 
 assert.equal(companyJournalEvidencePriceChange(110, 100), 10);
@@ -326,8 +326,8 @@ for (const glossaryId of ["current_ratio", "interest_coverage", "net_debt", "bps
 }
 
 const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
-const journalPanelSource = await readFile(new URL("../src/components/CompanyJournalPanel.tsx", import.meta.url), "utf8");
-const journalSummarySource = await readFile(new URL("../src/components/CompanyJournalSummaryPanel.tsx", import.meta.url), "utf8");
+const journalPanelSource = await readFile(new URL("../src/company-journal/CompanyJournalPanel.tsx", import.meta.url), "utf8");
+const journalSummarySource = await readFile(new URL("../src/company-journal/CompanyJournalSummaryPanel.tsx", import.meta.url), "utf8");
 assert.match(
   journalPanelSource,
   /mergeCompanyJournalValuationPrices\([\s\S]*?storedEvidence\?\.valuationPriceSeries \?\? \[\][\s\S]*?storedPerformanceSeries/,

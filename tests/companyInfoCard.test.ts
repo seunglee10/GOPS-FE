@@ -5,7 +5,7 @@ import {
   formatCompanyInfoChange,
   formatCompanyInfoMarketCap,
   formatCompanyInfoPrice
-} from "../src/components/CompanySummaryPanel";
+} from "../src/company-journal/CompanySummaryPanel";
 import { fetchMarketHeatmap } from "../src/market/heatmapApi";
 
 assert.equal(formatCompanyInfoPrice(194.72), "$194.72");
@@ -82,7 +82,7 @@ try {
 }
 
 const [source, styles] = await Promise.all([
-  readFile(new URL("../src/components/CompanySummaryPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/company-journal/CompanySummaryPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/styles.css", import.meta.url), "utf8")
 ]);
 

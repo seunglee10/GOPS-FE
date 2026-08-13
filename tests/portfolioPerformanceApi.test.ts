@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import {
   buildPortfolioPrincipalBands,
   normalizePortfolioPerformanceResponse
-} from "../src/components/portfolioPerformanceApi";
+} from "../src/portfolio/portfolioPerformanceApi";
 
 const normalized = normalizePortfolioPerformanceResponse({
   status: "ready",
@@ -43,8 +43,8 @@ const gainBands = buildPortfolioPrincipalBands(
 );
 assert.deepEqual(gainBands.map((band) => band.tone), ["portfolio-above"]);
 
-const componentSource = await readFile(new URL("../src/components/PortfolioHoldingsPanel.tsx", import.meta.url), "utf8");
-const styles = await readFile(new URL("../src/components/PortfolioPerformanceChart.css", import.meta.url), "utf8");
+const componentSource = await readFile(new URL("../src/portfolio/PortfolioHoldingsPanel.tsx", import.meta.url), "utf8");
+const styles = await readFile(new URL("../src/portfolio/PortfolioPerformanceChart.css", import.meta.url), "utf8");
 assert.match(componentSource, /buildPortfolioPrincipalBands\(displayedPortfolioPoints, displayedPrincipalPoints\)/);
 assert.match(componentSource, /portfolio-performance-principal-band is-\$\{band\.tone\}/);
 assert.match(componentSource, /useState<PortfolioPerformanceRange>\("ALL"\)/);

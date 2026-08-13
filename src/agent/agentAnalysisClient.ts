@@ -4,7 +4,7 @@ import {
   normalizeLayoutProposal,
   type AgentAnalysisReport,
   type IntentRoute
-} from "../agents/agentAnalysis";
+} from "./agentAnalysis";
 import type { AgentLayoutProposal } from "../layout/agentLayoutTypes";
 
 const AGENT_REPORT_TERMINAL_STATUSES = new Set(["completed", "deep_completed", "failed", "canceled"]);

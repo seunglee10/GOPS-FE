@@ -128,7 +128,7 @@ assert.equal(marketMoveToast.message, "전일 정규장 종가 대비 -5.75% 하
 assert.equal(marketMoveToast.detail, "현재가 94.25 · 전일 정규장 종가 100");
 
 const bottomCommandBarSource = readFileSync(
-  fileURLToPath(new URL("../src/components/BottomCommandBar.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/agent/BottomCommandBar.tsx", import.meta.url)),
   "utf-8"
 );
 const snapshotStart = bottomCommandBarSource.indexOf('if (payload.type === "snapshot")');

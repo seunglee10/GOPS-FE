@@ -1,6 +1,6 @@
 import type { ChartTradeSetup } from "./chartTradeSetup";
 import type { ChartInterval } from "./types";
-import type { CreatePriceConditionInput } from "../priceCondition/priceConditionApi";
+import type { CreatePriceConditionInput } from "../price-condition/priceConditionApi";
 
 export const DEFAULT_PAPER_TRADE_QUANTITY = 20;
 

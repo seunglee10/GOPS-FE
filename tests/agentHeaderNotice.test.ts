@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { agentReportCompletionMessage } from "../src/agent/agentHeaderNotice";
-import type { AgentAnalysisReport } from "../src/agents/agentAnalysis";
+import type { AgentAnalysisReport } from "../src/agent/agentAnalysis";
 
 function report(overrides: Partial<AgentAnalysisReport> = {}): AgentAnalysisReport {
   return {

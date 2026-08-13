@@ -14,7 +14,7 @@ import {
   setChartCommentaryMode,
   type ChartCommentaryRequestSnapshot
 } from "../src/agent/chartCommentaryHistory";
-import type { AgentAnalysisReport } from "../src/agents/agentAnalysis";
+import type { AgentAnalysisReport } from "../src/agent/agentAnalysis";
 import { restoreTiledPanelStateSnapshot, serializeTiledPanelState, type TiledPanelState } from "../src/layout/panelLayout";
 
 const viewport = { width: 1280, height: 720 };

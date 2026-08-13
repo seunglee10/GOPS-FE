@@ -31,8 +31,8 @@ import {
   formatAgentAnalysisReport,
   normalizeAgentAnalysisReport,
   shouldAutoApplyAgentLayoutProposal
-} from "../src/agents/agentAnalysis";
-import { parsePortfolioHoldingsApiResponse, validPortfolioCash } from "../src/components/portfolioHoldingsApi";
+} from "../src/agent/agentAnalysis";
+import { parsePortfolioHoldingsApiResponse, validPortfolioCash } from "../src/portfolio/portfolioHoldingsApi";
 import {
   DEFAULT_AGENT_DRAFT_SEED,
   isAgentChartReferenceAvailable,
@@ -4411,7 +4411,7 @@ assert.match(appSource, /resolveAgentLayoutCommand\(analysisPayload\)/);
 const runAgentPromptIndex = appSource.indexOf("const runAgentPrompt");
 assert.ok(appSource.indexOf("resolveAgentLayoutCommand(analysisPayload)", runAgentPromptIndex) < appSource.indexOf("requestAgentAnalysisPayload(analysisRequestPayload", runAgentPromptIndex));
 
-const bottomCommandBarSource = readFileSync(fileURLToPath(new URL("../src/components/BottomCommandBar.tsx", import.meta.url)), "utf-8");
+const bottomCommandBarSource = readFileSync(fileURLToPath(new URL("../src/agent/BottomCommandBar.tsx", import.meta.url)), "utf-8");
 const headerNotificationMenuSource = readFileSync(fileURLToPath(new URL("../src/alerts/HeaderNotificationMenu.tsx", import.meta.url)), "utf-8");
 assert.doesNotMatch(bottomCommandBarSource, /AgentSubmitResult|ChatLogEntry|chatPanelOpen/);
 assert.doesNotMatch(bottomCommandBarSource, /Agent log|AGENT LOG|agent-log-button|bottom-chat-panel/);
@@ -4420,7 +4420,7 @@ assert.match(bottomCommandBarSource, /window\.setTimeout\(\(\) => onAgentNoticeD
 assert.match(bottomCommandBarSource, /기업명\/티커로 차트 열기/);
 assert.match(bottomCommandBarSource, /선택한 자료/);
 
-const presetDockSource = readFileSync(fileURLToPath(new URL("../src/components/PresetDock.tsx", import.meta.url)), "utf-8");
+const presetDockSource = readFileSync(fileURLToPath(new URL("../src/layout/PresetDock.tsx", import.meta.url)), "utf-8");
 assert.doesNotMatch(presetDockSource, /statusFeedback/);
 assert.doesNotMatch(presetDockSource, /layout-preset-status/);
 assert.doesNotMatch(presetDockSource, /role="status"/);
@@ -4481,11 +4481,11 @@ assert.match(alertMenuSource, /onOpenNotificationSymbol\(chartSymbol\)/);
 assert.match(alertMenuSource, /onClick=\{\(\) => void openNotification\(notification\)\}/);
 assert.doesNotMatch(alertMenuSource, /disabled=\{saving \|\| Boolean\(notification\.readAt\)\}/);
 
-const priceConditionPanelSource = readFileSync(fileURLToPath(new URL("../src/components/PriceConditionPanel.tsx", import.meta.url)), "utf-8");
+const priceConditionPanelSource = readFileSync(fileURLToPath(new URL("../src/price-condition/PriceConditionPanel.tsx", import.meta.url)), "utf-8");
 assert.match(priceConditionPanelSource, /role="tablist"/);
 assert.match(priceConditionPanelSource, /view === "account" \? "가상계좌 가격 조건"/);
 assert.doesNotMatch(priceConditionPanelSource, /\{ id: "price", label:/);
-const notificationCenterPanelSource = readFileSync(fileURLToPath(new URL("../src/components/NotificationCenterPanel.tsx", import.meta.url)), "utf-8");
+const notificationCenterPanelSource = readFileSync(fileURLToPath(new URL("../src/alerts/NotificationCenterPanel.tsx", import.meta.url)), "utf-8");
 assert.match(notificationCenterPanelSource, /알림/);
 assert.match(notificationCenterPanelSource, /관심 기업/);
 assert.match(notificationCenterPanelSource, /role="tabpanel"/);
@@ -4602,7 +4602,7 @@ assert.match(agentAnalysisClientSource, /\/api\/agents\/entities\/resolve/);
 assert.match(agentAnalysisClientSource, /EventSource/);
 assert.doesNotMatch(agentAnalysisClientSource, /\/api\/llm\/chat/);
 
-const newsPanelSource = readFileSync(fileURLToPath(new URL("../src/components/NewsPanel.tsx", import.meta.url)), "utf-8");
+const newsPanelSource = readFileSync(fileURLToPath(new URL("../src/news/NewsPanel.tsx", import.meta.url)), "utf-8");
 assert.match(newsPanelSource, /\/api\/market\/news\/daily/);
 assert.match(newsPanelSource, /limit:\s*"30"/);
 assert.match(newsPanelSource, /dailySummaries/);
@@ -4613,7 +4613,7 @@ assert.match(newsPanelSource, /sourceIconUrl/);
 assert.doesNotMatch(newsPanelSource, /일자별 뉴스 요약/);
 assert.match(newsPanelSource, /impactDirection/);
 
-const panelContentRendererSource = readFileSync(fileURLToPath(new URL("../src/components/PanelContentRenderer.tsx", import.meta.url)), "utf-8");
+const panelContentRendererSource = readFileSync(fileURLToPath(new URL("../src/layout/PanelContentRenderer.tsx", import.meta.url)), "utf-8");
 assert.match(panelContentRendererSource, /NewsPanel/);
 assert.match(panelContentRendererSource, /OrderTicket/);
 assert.match(panelContentRendererSource, /PortfolioHoldingsOnlyPanel/);
@@ -4633,14 +4633,14 @@ assert.doesNotMatch(panelContentRendererSource, /chart-panel-drag-strip|chart-in
 assert.match(panelContentRendererSource, /PriceConditionPanel[\s\S]*symbols=\{symbols\}[\s\S]*marketItems=\{marketItems\}[\s\S]*onOpenCompany=\{onOpenCompany\}/);
 assert.match(panelContentRendererSource, /알림과 관심 기업을 불러오는 중입니다/);
 
-const chartToolbarSelectSource = readFileSync(fileURLToPath(new URL("../src/components/ChartToolbarSelect.tsx", import.meta.url)), "utf-8");
+const chartToolbarSelectSource = readFileSync(fileURLToPath(new URL("../src/chart/ChartToolbarSelect.tsx", import.meta.url)), "utf-8");
 assert.match(chartToolbarSelectSource, /createPortal/);
 assert.match(chartToolbarSelectSource, /rect\.bottom \+ menuGap/);
 assert.match(chartToolbarSelectSource, /role="listbox"/);
 assert.match(chartToolbarSelectSource, /aria-activedescendant/);
 assert.match(chartToolbarSelectSource, /chart-toolbar-select-option-icon/);
 
-const portfolioHoldingsPanelSource = readFileSync(fileURLToPath(new URL("../src/components/PortfolioHoldingsPanel.tsx", import.meta.url)), "utf-8");
+const portfolioHoldingsPanelSource = readFileSync(fileURLToPath(new URL("../src/portfolio/PortfolioHoldingsPanel.tsx", import.meta.url)), "utf-8");
 assert.match(portfolioHoldingsPanelSource, /RefreshCcw/);
 assert.match(portfolioHoldingsPanelSource, /포트폴리오 새로고침/);
 assert.match(portfolioHoldingsPanelSource, /loadPortfolioHoldingsStore\(source, true\)/);
@@ -4654,7 +4654,7 @@ assert.match(portfolioHoldingsPanelSource, /\{ id: "summary", title: "자산" \}
 assert.doesNotMatch(portfolioHoldingsPanelSource, /portfolio-multi-page-arrow|이전 포트폴리오 화면|다음 포트폴리오 화면/);
 assert.doesNotMatch(portfolioHoldingsPanelSource, /className="portfolio-multi-refresh"/);
 
-const companySummaryPanelSource = readFileSync(fileURLToPath(new URL("../src/components/CompanySummaryPanel.tsx", import.meta.url)), "utf-8");
+const companySummaryPanelSource = readFileSync(fileURLToPath(new URL("../src/company-journal/CompanySummaryPanel.tsx", import.meta.url)), "utf-8");
 assert.equal(companySummaryPanelSource.match(/preserveAspectRatio="xMidYMid meet"/g)?.length, 1);
 assert.match(companySummaryPanelSource, /company-profitability-plot[^>]*preserveAspectRatio="none"/);
 assert.match(companySummaryPanelSource, /company-stability-ratios-plot[^>]*preserveAspectRatio="none"/);
@@ -4663,11 +4663,11 @@ assert.match(companySummaryPanelSource, /financialChartPlotAspectRatio = \(620 -
 assert.match(companySummaryPanelSource, /height: Math\.min\(measuredSize\.height, Math\.round\(proportionalHeight\)\)/);
 assert.equal(companySummaryPanelSource.match(/<svg ref=\{chartRef\} className="company-(?:profitability|stability)/g)?.length, 1);
 
-const chartPanelSource = readFileSync(fileURLToPath(new URL("../src/components/ChartPanel.tsx", import.meta.url)), "utf-8");
-const chartEventOverlaySource = readFileSync(fileURLToPath(new URL("../src/components/ChartEventOverlay.tsx", import.meta.url)), "utf-8");
+const chartPanelSource = readFileSync(fileURLToPath(new URL("../src/chart/ChartPanel.tsx", import.meta.url)), "utf-8");
+const chartEventOverlaySource = readFileSync(fileURLToPath(new URL("../src/chart/ChartEventOverlay.tsx", import.meta.url)), "utf-8");
 const chartDocumentAdapterSource = readFileSync(fileURLToPath(new URL("../src/chart/chartDocumentAdapter.ts", import.meta.url)), "utf-8");
 const symbolSearchSource = readFileSync(fileURLToPath(new URL("../src/components/SymbolSearch.tsx", import.meta.url)), "utf-8");
-const orderFlowPanelSource = readFileSync(fileURLToPath(new URL("../src/components/OrderFlowPanel.tsx", import.meta.url)), "utf-8");
+const orderFlowPanelSource = readFileSync(fileURLToPath(new URL("../src/orders/OrderFlowPanel.tsx", import.meta.url)), "utf-8");
 assert.match(chartPanelSource, /const chartVolumeProfileBinCount = 10;/);
 assert.equal((chartPanelSource.match(/targetBins: chartVolumeProfileBinCount/g) ?? []).length, 1);
 assert.match(chartPanelSource, /scene\.scales\.minPrice/);
@@ -4940,10 +4940,10 @@ assert.match(
   panelLayoutSource,
   /const companyInformationPanelKinds = new Set<PanelContentKind>\(\[[\s\S]*?"company"[\s\S]*?"companyJournal"/
 );
-const panelWorkspaceSource = readFileSync(fileURLToPath(new URL("../src/components/PanelWorkspace.tsx", import.meta.url)), "utf-8");
+const panelWorkspaceSource = readFileSync(fileURLToPath(new URL("../src/layout/PanelWorkspace.tsx", import.meta.url)), "utf-8");
 assert.doesNotMatch(panelWorkspaceSource, /panel-boundary-add|panel-add-menu|insertPanelAtBoundary|canInsertPanelAtBoundary|beginPanelSwap|hitTestSwappableSlot|boundaryAddMenuPosition/);
 assert.match(panelWorkspaceSource, /content\.kind === "priceCondition"/);
-const workspacePanelFrameSource = readFileSync(fileURLToPath(new URL("../src/components/WorkspacePanelFrame.tsx", import.meta.url)), "utf-8");
+const workspacePanelFrameSource = readFileSync(fileURLToPath(new URL("../src/layout/WorkspacePanelFrame.tsx", import.meta.url)), "utf-8");
 assert.doesNotMatch(workspacePanelFrameSource, /workspace-panel-close|canClose|onClose/);
 const panelRegistrySource = readFileSync(fileURLToPath(new URL("../src/layout/panelRegistry.ts", import.meta.url)), "utf-8");
 assert.match(panelRegistrySource, /kind: "compare"[\s\S]*title: "비교"/);

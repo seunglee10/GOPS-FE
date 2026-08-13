@@ -2,23 +2,23 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 const read = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), "utf8");
-const shell = read("../src/components/AiInvestmentCoachPanel.tsx");
-const shellStyles = read("../src/components/ai-coach/AiCoachShell.module.css");
-const runtimeProvider = read("../src/components/ai-coach/AiCoachRuntimeProvider.tsx");
-const runtimeState = read("../src/components/ai-coach/aiCoachRuntimeState.ts");
-const page = read("../src/components/ai-coach/CurrentPositionCoachPage.tsx");
-const pageStyles = read("../src/components/ai-coach/CurrentPositionCoachPage.module.css");
-const habits = read("../src/components/ai-coach/HabitCoachPage.tsx");
-const habitStyles = read("../src/components/ai-coach/HabitCoachPage.module.css");
-const actions = read("../src/components/ai-coach/CoachActionCenterPage.tsx");
-const actionStyles = read("../src/components/ai-coach/CoachActionCenterPage.module.css");
-const fixture = read("../src/components/ai-coach/devFixture.ts");
-const replaySeries = read("../src/components/ai-coach/replayChartSeries.ts");
+const shell = read("../src/agent/AiInvestmentCoachPanel.tsx");
+const shellStyles = read("../src/agent/ai-coach/AiCoachShell.module.css");
+const runtimeProvider = read("../src/agent/ai-coach/AiCoachRuntimeProvider.tsx");
+const runtimeState = read("../src/agent/ai-coach/aiCoachRuntimeState.ts");
+const page = read("../src/agent/ai-coach/CurrentPositionCoachPage.tsx");
+const pageStyles = read("../src/agent/ai-coach/CurrentPositionCoachPage.module.css");
+const habits = read("../src/agent/ai-coach/HabitCoachPage.tsx");
+const habitStyles = read("../src/agent/ai-coach/HabitCoachPage.module.css");
+const actions = read("../src/agent/ai-coach/CoachActionCenterPage.tsx");
+const actionStyles = read("../src/agent/ai-coach/CoachActionCenterPage.module.css");
+const fixture = read("../src/agent/ai-coach/devFixture.ts");
+const replaySeries = read("../src/agent/ai-coach/replayChartSeries.ts");
 const viteConfig = read("../vite.config.ts");
-const types = read("../src/components/ai-coach/types.ts");
+const types = read("../src/agent/ai-coach/types.ts");
 const alertApi = read("../src/alerts/alertApi.ts");
-const analysisNormalizer = read("../src/agents/agentAnalysis.ts");
-const renderer = read("../src/components/PanelContentRenderer.tsx");
+const analysisNormalizer = read("../src/agent/agentAnalysis.ts");
+const renderer = read("../src/layout/PanelContentRenderer.tsx");
 const panelLayout = read("../src/layout/panelLayout.ts");
 const frontendStyles = read("../src/styles.css");
 for (const label of ["당일 거래 회고", "장기 습관", "효과·보완 조건", "실행·알람 관리"]) assert.ok(shell.includes(label));
@@ -194,7 +194,7 @@ assert.match(fixture, /replayChartSeries/); assert.match(replaySeries, /replayCa
 assert.match(viteConfig, /chart_assets_v2/); assert.match(viteConfig, /2025-10-01/); assert.match(viteConfig, /2026-07-10/);
 assert.match(frontendStyles, /grid-template-rows: auto 106px minmax\(0, 1fr\) auto auto/);
 
-for (const [name, stylesheet] of Object.entries({ shellStyles, pageStyles, habitStyles, actionStyles, improvementStyles: read("../src/components/ai-coach/ImprovementCoachPage.module.css") })) {
+for (const [name, stylesheet] of Object.entries({ shellStyles, pageStyles, habitStyles, actionStyles, improvementStyles: read("../src/agent/ai-coach/ImprovementCoachPage.module.css") })) {
   assert.doesNotMatch(stylesheet, /\bfont-size\s*:|\bfont-weight\s*:/, `${name} must use complete DESIGN.md typography roles`);
   for (const line of stylesheet.split("\n").filter((value) => /\bfont\s*:/.test(value))) {
     assert.match(line, /font:\s*(?:var\(--type-[^)]+\)|inherit)\s*;/, `${name} contains a non-semantic font declaration: ${line.trim()}`);
@@ -208,7 +208,7 @@ assert.match(habitStyles, /\.sectionHeading h4[\s\S]*font: var\(--type-title-sm\
 assert.match(actionStyles, /\.sourceBadge[\s\S]*font: var\(--type-title-sm\)/);
 assert.match(pageStyles, /\.assessment > strong[\s\S]*font: var\(--type-title-sm\)/);
 assert.match(habitStyles, /\.profileHeadline,[\s\S]*font: var\(--type-title-sm\)/);
-const improvementStyles = read("../src/components/ai-coach/ImprovementCoachPage.module.css");
+const improvementStyles = read("../src/agent/ai-coach/ImprovementCoachPage.module.css");
 assert.match(improvementStyles, /\.summarySection p[\s\S]*font: var\(--type-title-sm\)/);
 for (const stylesheet of [pageStyles, habitStyles, improvementStyles]) assert.match(stylesheet, /font: var\(--type-title-sm\)/);
 for (const stylesheet of [pageStyles, habitStyles, improvementStyles, actionStyles]) {

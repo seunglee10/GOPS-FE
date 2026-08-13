@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   newsKeywordEndpoint,
   normalizeNewsKeywordResponse
-} from "../src/components/NewsKeywordPanel";
+} from "../src/news/NewsKeywordPanel";
 
 
 assert.equal(newsKeywordEndpoint("live"), "/api/market/news/daily");

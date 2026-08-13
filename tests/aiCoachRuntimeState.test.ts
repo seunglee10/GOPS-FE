@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { normalizeCoachReport } from "../src/agents/agentAnalysis";
-import type { CoachReport } from "../src/components/ai-coach/types";
+import { normalizeCoachReport } from "../src/agent/agentAnalysis";
+import type { CoachReport } from "../src/agent/ai-coach/types";
 import {
   aiCoachRuntimeReducer,
   createAiCoachRuntimeState,
   resolveSeededPortfolioStatus
-} from "../src/components/ai-coach/aiCoachRuntimeState";
+} from "../src/agent/ai-coach/aiCoachRuntimeState";
 
 const report = (analysisId: string) => ({
   contractVersion: "coach-report.v2",

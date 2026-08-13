@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useAuth } from "./auth/AuthProvider";
 import { submitAlertCommand } from "./alerts/alertApi";
-import { PresetDock } from "./components/PresetDock";
+import { PresetDock } from "./layout/PresetDock";
 import { applyLayoutLoadProposalToPresets, buildAgentLayoutPresetSummaries, buildPresetLayout, directAgentPresetIdForPrompt, ensurePortfolioInvestedPanelState, isLikelyPresetLoadPrompt, migrateCompanyComparePanelSnapshot, migratePortfolioInvestmentSnapshot, type LayoutLoadPresetResult, type LayoutPreset } from "./layout/layoutPresets";
 import { useLayoutPresets } from "./layout/useLayoutPresets";
 import {
@@ -48,11 +48,11 @@ import {
   type ChartCommentaryRequestSnapshot
 } from "./agent/chartCommentaryHistory";
 import { publishOntologyReport } from "./ontology/ontologyEvents";
-import { BottomCommandBar } from "./components/BottomCommandBar";
-import { type ChartPanelHandle } from "./components/ChartPanel";
-import { useAiCoachRuntime } from "./components/ai-coach/AiCoachRuntimeProvider";
-import { PanelWorkspace } from "./components/PanelWorkspace";
-import { PlacementPickerOverlay } from "./components/PlacementPickerOverlay";
+import { BottomCommandBar } from "./agent/BottomCommandBar";
+import { type ChartPanelHandle } from "./chart/ChartPanel";
+import { useAiCoachRuntime } from "./agent/ai-coach/AiCoachRuntimeProvider";
+import { PanelWorkspace } from "./layout/PanelWorkspace";
+import { PlacementPickerOverlay } from "./layout/PlacementPickerOverlay";
 import {
   loadCompanyCompareSelections,
   migratePanelCompareSelections,
@@ -60,7 +60,7 @@ import {
   normalizeCompanySymbol,
   persistCompanyCompareSelections,
   type CompanyCompareSelectionState
-} from "./companyCompare/companyCompareSelection";
+} from "./company-compare/companyCompareSelection";
 import type { SemanticSelectionSnapshot } from "./chart/semanticTimeline";
 import type { AnalysisAssetInterval } from "./chart/analysisAssetsApi";
 import {
@@ -140,13 +140,13 @@ import { normalizeSector, sectorLabelKo } from "./market/sectors";
 import { sp500UniverseSeed, type Sp500UniverseItem } from "./market/sp500Universe.seed";
 import { TreeMapCanvas } from "./treemap/TreeMapCanvas";
 import { GlossaryTooltip } from "./glossary/GlossaryTooltip";
-import { RelatedIndexTooltip } from "./components/RelatedIndexTooltip";
-import type { AgentAnalysisReport } from "./agents/agentAnalysis";
+import { RelatedIndexTooltip } from "./market/RelatedIndexTooltip";
+import type { AgentAnalysisReport } from "./agent/agentAnalysis";
 import { addAgentReportToWildPanel, resolveWildPanelSlotId } from "./layout/wildPanel";
 import { resolveRecommendationCompanyNavigation } from "./recommendations/recommendationNavigation";
 import type { StockRecommendationSelection } from "./recommendations/StockRecommendationsPanel";
 
-const TradeAutomationConfirmationDialog = lazy(() => import("./components/TradeAutomationConfirmationDialog")
+const TradeAutomationConfirmationDialog = lazy(() => import("./orders/TradeAutomationConfirmationDialog")
   .then((module) => ({ default: module.TradeAutomationConfirmationDialog })));
 
 type ActiveAgentRun = {
@@ -1410,7 +1410,7 @@ export function App() {
     if (activeTradeProposal) {
       setAgentBusy(true);
       try {
-        const { publishTradeConditionsChanged, resolveTradeConditionCommand } = await import("./priceCondition/priceConditionApi");
+        const { publishTradeConditionsChanged, resolveTradeConditionCommand } = await import("./price-condition/priceConditionApi");
         const command = await resolveTradeConditionCommand({
           text: prompt,
           analysisId: activeTradeProposal.analysisId,
@@ -1955,7 +1955,7 @@ export function App() {
     }
     setAgentBusy(true);
     try {
-      const { createPriceCondition } = await import("./priceCondition/priceConditionApi");
+      const { createPriceCondition } = await import("./price-condition/priceConditionApi");
       const confirmedDraft: TradeAutomationConfirmationDraft = {
         ...tradeAutomationDraft,
         quantity,

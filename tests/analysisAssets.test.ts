@@ -447,7 +447,7 @@ assert.deepEqual(defaultChartAssetBuildIntervals("5m"), ["1m", "1D"]);
 assert.deepEqual(defaultChartAssetBuildIntervals("1D"), ["1m", "1D"]);
 assert.deepEqual(defaultChartAssetBuildIntervals("1M"), ["1m", "1D"]);
 
-const opsSource = readFileSync(fileURLToPath(new URL("../src/components/ChartAssetOpsPanel.tsx", import.meta.url)), "utf-8");
+const opsSource = readFileSync(fileURLToPath(new URL("../src/chart/ChartAssetOpsPanel.tsx", import.meta.url)), "utf-8");
 const presentationSource = readFileSync(fileURLToPath(new URL("../src/chart/analysisAssetPresentation.ts", import.meta.url)), "utf-8");
 const globalStylesSource = readFileSync(fileURLToPath(new URL("../src/styles.css", import.meta.url)), "utf-8");
 const chartFeatureStylesSource = readFileSync(fileURLToPath(new URL("../src/chart-features.css", import.meta.url)), "utf-8");
@@ -475,7 +475,7 @@ removedGeometryColorLiterals.forEach((literal) => assert.equal(globalStylesSourc
 assert.match(semanticCatalogSource, /상승 페넌트/);
 assert.match(opsSource, /<th>감지 패턴<\/th>/);
 assert.match(opsSource, /formatDetectedPattern\(item\.primaryPattern\)/);
-const commentarySource = readFileSync(fileURLToPath(new URL("../src/components/ChartCommentaryPanel.tsx", import.meta.url)), "utf-8");
+const commentarySource = readFileSync(fileURLToPath(new URL("../src/chart/ChartCommentaryPanel.tsx", import.meta.url)), "utf-8");
 assert.match(commentarySource, /<StockLogo symbol=\{normalizedSymbol\}[^>]*className="chart-commentary-source-logo"/);
 assert.match(commentarySource, /className="chart-commentary-source-identity"/);
 assert.match(commentarySource, /buildChartCommentaryViewModel/);
@@ -518,7 +518,7 @@ assert.match(chartFeatureStylesSource, /\.chart-commentary-holding th \{[^}]*col
 assert.match(commentarySource, /buildChartCommentaryViewModel\(diagnostics\.resolvedAsset, setup, currentPrice\)/);
 assert.match(commentarySource, /ConversationView/);
 assert.match(semanticCatalogSource, /하락 채널 상단 돌파/);
-const patternPanelSource = readFileSync(fileURLToPath(new URL("../src/components/ChartPatternListPanel.tsx", import.meta.url)), "utf-8");
+const patternPanelSource = readFileSync(fileURLToPath(new URL("../src/chart/ChartPatternListPanel.tsx", import.meta.url)), "utf-8");
 assert.match(patternPanelSource, /fetchChartAssetCoverage/);
 assert.match(patternPanelSource, /subscribeAnalysisAssetsInvalidation/);
 assert.match(patternPanelSource, /formatDetectedPattern/);
@@ -526,7 +526,7 @@ assert.match(patternPanelSource, /onSelectPatternAsset\(pattern\.symbol, pattern
 assert.match(patternPanelSource, /패턴 종목 검색/);
 assert.match(patternPanelSource, /활성 패턴이 있는 종목이 없습니다/);
 assert.match(patternPanelSource, /필터와 일치하는 종목이 없습니다/);
-const toggleSource = readFileSync(fileURLToPath(new URL("../src/components/ChartAnalysisLayerToggles.tsx", import.meta.url)), "utf-8");
+const toggleSource = readFileSync(fileURLToPath(new URL("../src/chart/ChartAnalysisLayerToggles.tsx", import.meta.url)), "utf-8");
 assert.match(toggleSource, /label="근거"/);
 assert.match(toggleSource, /label="저항"/);
 assert.match(toggleSource, /accessibleLabel="지지·저항"/);

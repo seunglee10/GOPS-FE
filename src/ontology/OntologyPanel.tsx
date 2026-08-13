@@ -3,7 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { buildOntologyGraphFromEvidence } from "./buildOntologyGraphFromEvidence";
 import { requestOntologyReport } from "./ontologyReportClient";
 import { fetchMarketHeatmap } from "../market/heatmapApi";
-import type { Sp500UniverseItem } from "./../market/sp500Universe.seed";
+import type { Sp500UniverseItem } from "../market/sp500Universe.seed";
 import type { AgentEvidenceItem } from "./ontologyTypes";
 import { subscribeOntologyReports } from "./ontologyEvents";
 import { OntologyForceGraph, type OntologyQuote } from "./OntologyForceGraph";

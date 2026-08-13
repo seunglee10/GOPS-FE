@@ -70,7 +70,7 @@ assert.deepEqual(compactNewsPopover, {
 });
 
 const overlaySource = readFileSync(
-  fileURLToPath(new URL("../src/components/ChartEventOverlay.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/chart/ChartEventOverlay.tsx", import.meta.url)),
   "utf-8"
 );
 assert.match(overlaySource, /chart-event-popover-badge/);

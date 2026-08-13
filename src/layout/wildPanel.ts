@@ -2,7 +2,7 @@ import type {
   AgentAnalysisReport,
   FinalAnswerCitation,
   FinalAnswerSection
-} from "../agents/agentAnalysis";
+} from "../agent/agentAnalysis";
 import type { TiledPanelState } from "./panelLayout";
 
 export const wildPanelBasePageId = "base";

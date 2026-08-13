@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const [styles, source] = await Promise.all([
   readFile(new URL("../src/styles.css", import.meta.url), "utf8"),
-  readFile(new URL("../src/companyCompare/CompanyComparePanelV2.tsx", import.meta.url), "utf8")
+  readFile(new URL("../src/company-compare/CompanyComparePanelV2.tsx", import.meta.url), "utf8")
 ]);
 
 assert.match(

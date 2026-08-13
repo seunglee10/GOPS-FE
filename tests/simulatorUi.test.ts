@@ -20,7 +20,7 @@ import {
   companyJournalRequestKey,
   journalMetricEvidenceTargets,
   readingEvidenceTargets
-} from "../src/components/CompanyJournalPanel";
+} from "../src/company-journal/CompanyJournalPanel";
 import { shouldReloadMarketIndicesForSimulatorStatus } from "../src/market/useMarketIndices";
 import { relatedIndicesSimulatorContextKey } from "../src/market/relatedIndicesApi";
 
@@ -203,23 +203,23 @@ const apiSource = readFileSync(
   "utf-8"
 );
 const bottomCommandBarSource = readFileSync(
-  fileURLToPath(new URL("../src/components/BottomCommandBar.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/agent/BottomCommandBar.tsx", import.meta.url)),
   "utf-8"
 );
 const chartPanelSource = readFileSync(
-  fileURLToPath(new URL("../src/components/ChartPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/chart/ChartPanel.tsx", import.meta.url)),
   "utf-8"
 );
 const newsPanelSource = readFileSync(
-  fileURLToPath(new URL("../src/components/NewsPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/news/NewsPanel.tsx", import.meta.url)),
   "utf-8"
 );
 const companyJournalSource = readFileSync(
-  fileURLToPath(new URL("../src/components/CompanyJournalPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/company-journal/CompanyJournalPanel.tsx", import.meta.url)),
   "utf-8"
 );
 const companyJournalPerformanceSource = readFileSync(
-  fileURLToPath(new URL("../src/components/CompanyJournalPerformanceChart.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/company-journal/CompanyJournalPerformanceChart.tsx", import.meta.url)),
   "utf-8"
 );
 const marketIndicesHookSource = readFileSync(
@@ -227,7 +227,7 @@ const marketIndicesHookSource = readFileSync(
   "utf-8"
 );
 const indexCommentarySource = readFileSync(
-  fileURLToPath(new URL("../src/components/IndexCommentaryPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/market/IndexCommentaryPanel.tsx", import.meta.url)),
   "utf-8"
 );
 assert.doesNotMatch(controlSource, /onSelectSymbol/);
@@ -307,7 +307,7 @@ assert.ok(
 );
 
 const chartCommentarySource = readFileSync(
-  fileURLToPath(new URL("../src/components/ChartCommentaryPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/chart/ChartCommentaryPanel.tsx", import.meta.url)),
   "utf-8"
 );
 assert.doesNotMatch(chartCommentarySource, /fetchAnalysisAssets/);
@@ -317,7 +317,7 @@ assert.match(chartCommentarySource, /buildChartCommentaryViewModel/);
 assert.match(chartCommentarySource, /GlossaryText text=\{step\.body\}/);
 
 const orderTicketSource = readFileSync(
-  fileURLToPath(new URL("../src/components/OrderTicket.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/orders/OrderTicket.tsx", import.meta.url)),
   "utf-8"
 );
 assert.doesNotMatch(orderTicketSource, /submitSimulatorBasket/);
@@ -329,15 +329,15 @@ const paperClientSource = readFileSync(
   "utf-8"
 );
 const quickOrderSource = readFileSync(
-  fileURLToPath(new URL("../src/components/QuickOrderPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/orders/QuickOrderPanel.tsx", import.meta.url)),
   "utf-8"
 );
 const paperAccountSource = readFileSync(
-  fileURLToPath(new URL("../src/components/PaperAccountPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/orders/PaperAccountPanel.tsx", import.meta.url)),
   "utf-8"
 );
 const priceConditionSource = readFileSync(
-  fileURLToPath(new URL("../src/components/PriceConditionPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/price-condition/PriceConditionPanel.tsx", import.meta.url)),
   "utf-8"
 );
 assert.match(paperAccountSource, /selectPortfolioHoldingSymbol\(symbol\)/);
@@ -430,7 +430,7 @@ assert.match(
 assert.doesNotMatch(layoutPresetSource, /kind: "trade"/);
 
 const portfolioHoldingsSource = readFileSync(
-  fileURLToPath(new URL("../src/components/PortfolioHoldingsPanel.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/portfolio/PortfolioHoldingsPanel.tsx", import.meta.url)),
   "utf-8"
 );
 const paperAccountProviderSource = readFileSync(

@@ -130,7 +130,7 @@ assert.match(holdingMarkerSource, /context\.globalAlpha = 0\.72/);
 assert.match(chartCanvasSource, /isHoldingPrice \? colors\.pointYellow/);
 
 const chartPanelSource = readFileSync(
-  resolve(process.cwd(), "src/components/ChartPanel.tsx"),
+  resolve(process.cwd(), "src/chart/ChartPanel.tsx"),
   "utf-8"
 );
 assert.match(chartPanelSource, /chart-holding-price-marker/);

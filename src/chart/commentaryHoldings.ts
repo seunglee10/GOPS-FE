@@ -1,4 +1,4 @@
-import type { PortfolioPosition } from "../components/portfolioHoldingsApi";
+import type { PortfolioPosition } from "../portfolio/portfolioHoldingsApi";
 
 export type ChartCommentaryHoldingDisplay = {
   status: "확인 중" | "계좌 미연결" | "확인 불가" | "보유" | "미보유";
