@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createChartDocument } from "../../chart-engine/src/chartDocuments";
-import { executeChartCommandGroup, makeChartCommand } from "../../chart-engine/src/commands";
+import { createChartDocument } from "../packages/chart-engine/src/chartDocuments";
+import { executeChartCommandGroup, makeChartCommand } from "../packages/chart-engine/src/commands";
 import { analysisAssetApplyCommands, analysisLayerOfDrawing, analysisLayerToggleCommands, defaultAnalysisLayerVisibility, hasAnalysisLayerDrawings, interpretationFinalDrawings, isChartAssetDrawing } from "../src/chart/analysisLayerController";
 import {
   normalizeAnalysisAssetsResponse,
@@ -451,7 +451,7 @@ const opsSource = readFileSync(fileURLToPath(new URL("../src/chart/ChartAssetOps
 const presentationSource = readFileSync(fileURLToPath(new URL("../src/chart/analysisAssetPresentation.ts", import.meta.url)), "utf-8");
 const globalStylesSource = readFileSync(fileURLToPath(new URL("../src/styles.css", import.meta.url)), "utf-8");
 const chartFeatureStylesSource = readFileSync(fileURLToPath(new URL("../src/chart-features.css", import.meta.url)), "utf-8");
-const semanticCatalogSource = readFileSync(fileURLToPath(new URL("../../../shared/chart-contract/chart-semantics.ko.json", import.meta.url)), "utf-8");
+const semanticCatalogSource = readFileSync(fileURLToPath(new URL("../shared/chart-contract/chart-semantics.ko.json", import.meta.url)), "utf-8");
 assert.match(opsSource, /\["1m", "5m", "10m", "1h", "4h", "1D", "1W"\]/);
 assert.match(opsSource, /\["1m", "1D"\]/);
 assert.match(opsSource, /defaultChartAssetBuildIntervals\(currentInterval\)/);

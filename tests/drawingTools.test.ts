@@ -4,8 +4,8 @@ import {
   normalizeChartDocument,
   restoreChartDocumentSnapshot,
   snapshotChartDocument
-} from "../../chart-engine/src/chartDocuments";
-import { executeChartCommand, makeChartCommand } from "../../chart-engine/src/commands";
+} from "../packages/chart-engine/src/chartDocuments";
+import { executeChartCommand, makeChartCommand } from "../packages/chart-engine/src/commands";
 import {
   buildFibonacciLevelGeometry,
   buildProposalRiskRewardGeometry,
@@ -14,12 +14,12 @@ import {
   riskRewardDirection,
   spatialTrendParallelOffsets,
   trendParallelOffsets
-} from "../../chart-engine/src/drawingGeometry";
+} from "../packages/chart-engine/src/drawingGeometry";
 import {
   chartRuntimeReducer,
   createInitialChartRuntimeState,
   getChartDocumentForPanel
-} from "../../chart-engine/src/runtime";
+} from "../packages/chart-engine/src/runtime";
 import {
   buildDraggedAnchors,
   drawingLabelLayout,

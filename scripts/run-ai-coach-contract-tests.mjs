@@ -191,7 +191,7 @@ assert.doesNotMatch(page, /Math\.random/);
 assert.doesNotMatch(fixture, /Math\.random/);
 assert.doesNotMatch(fixture, /fixedSeries|Math\.sin|Math\.cos/);
 assert.match(fixture, /replayChartSeries/); assert.match(replaySeries, /replayCandlesBySymbol/); assert.match(replaySeries, /rsiAt/); assert.match(replaySeries, /ema\(closes, 12\)/);
-assert.match(viteConfig, /chart_assets_v2/); assert.match(viteConfig, /2025-10-01/); assert.match(viteConfig, /2026-07-10/);
+assert.match(viteConfig, /fixtures\/replay-candles/); assert.match(viteConfig, /2025-10-01/); assert.match(viteConfig, /2026-07-10/);
 assert.match(frontendStyles, /grid-template-rows: auto 106px minmax\(0, 1fr\) auto auto/);
 
 for (const [name, stylesheet] of Object.entries({ shellStyles, pageStyles, habitStyles, actionStyles, improvementStyles: read("../src/agent/ai-coach/ImprovementCoachPage.module.css") })) {

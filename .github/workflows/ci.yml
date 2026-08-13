@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run chart tests
+        run: npm run test:chart
+
+      - name: Run simulator tests
+        run: npm run test:simulator
+
+      - name: Run layout tests
+        run: npm run test:layout
+
+      - name: Run AI coach contract tests
+        run: npm run test:ai-coach
+
+      - name: Run alert tests
+        run: npm run test:alerts
+
+      - name: Build
+        run: npm run build
+
+      - name: Enforce bundle budget
+        run: npm run test:bundle-size

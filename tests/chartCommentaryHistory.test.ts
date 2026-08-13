@@ -30,7 +30,7 @@ const source: ChartCommentaryRequestSnapshot = {
 };
 
 const normalizedExplanation = normalizeChartExplanation(explanation());
-const explanationSchema = JSON.parse(readFileSync(fileURLToPath(new URL("../../../shared/chart-contract/chart-explanation.schema.json", import.meta.url)), "utf-8"));
+const explanationSchema = JSON.parse(readFileSync(fileURLToPath(new URL("../shared/chart-contract/chart-explanation.schema.json", import.meta.url)), "utf-8"));
 assert.equal(explanationSchema.properties.version.const, "chart-explanation.v1");
 assert.deepEqual(explanationSchema.properties.focusGroups.required, ["evidence", "pattern", "support", "resistance"]);
 assert.ok(normalizedExplanation);

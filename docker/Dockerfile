@@ -1,0 +1,30 @@
+# 역할: GOPS React frontend를 정적 파일로 빌드하고 nginx로 서빙합니다.
+# 연결: /api, /ws 요청은 nginx 또는 ingress 규칙으로 gops-backend에 연결합니다.
+# 빌드 컨텍스트: 이 저장소의 루트 (docker build -f docker/Dockerfile .)
+FROM node:22-alpine AS builder
+
+ARG VITE_LOGO_DEV_PUBLISHABLE_KEY=
+ARG LOGODEV_PUB_KEY=
+ARG VITE_LOGO_DEV_ATTRIBUTION=true
+ENV VITE_LOGO_DEV_PUBLISHABLE_KEY=${VITE_LOGO_DEV_PUBLISHABLE_KEY}
+ENV LOGODEV_PUB_KEY=${LOGODEV_PUB_KEY}
+ENV VITE_LOGO_DEV_ATTRIBUTION=${VITE_LOGO_DEV_ATTRIBUTION}
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+FROM nginx:1.27-alpine
+
+COPY docker/nginx/gops-frontend.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 5173
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:5173/healthz >/dev/null || exit 1

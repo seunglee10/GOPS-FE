@@ -22,9 +22,9 @@ import "./paperHoldingPrice.test";
 import "./analysisLevelPriceTargets.test";
 import "./chartTradeMarkers.test";
 import "./chartEventPopoverLayout.test";
-import { getChartAgentAccess } from "../../chart-engine/src/agentAccess";
-import { normalizeAgentChatResponse } from "../../chart-engine/src/agentChat";
-import { isChartDataRenderable } from "../../chart-engine/src/renderability";
+import { getChartAgentAccess } from "../packages/chart-engine/src/agentAccess";
+import { normalizeAgentChatResponse } from "../packages/chart-engine/src/agentChat";
+import { isChartDataRenderable } from "../packages/chart-engine/src/renderability";
 import { compileDeterministicChartOperations } from "../src/agent/chartOperationCompiler";
 import {
   buildAgentAnalysisRequest,
@@ -38,28 +38,28 @@ import {
   isAgentChartReferenceAvailable,
   resolveAgentChartReference,
   resolveAgentSendContent
-} from "../../chart-engine/src/agentReference";
-import { applyCandleEvent, applySnapshotToCandles, candleKey } from "../../chart-engine/src/candleStore";
-import { createChartDocument, normalizeChartDocument } from "../../chart-engine/src/chartDocuments";
-import { findTargetChartPanel } from "../../chart-engine/src/chartPanelSelection";
-import { executeChartCommand, executeChartCommandGroup, makeChartCommand, validateChartProposal } from "../../chart-engine/src/commands";
-import { buildTrendParallelLines, projectTrendLine } from "../../chart-engine/src/drawingGeometry";
-import { applyDisplayContinuity } from "../../chart-engine/src/displayContinuity";
-import { defaultVisibleBarsForInterval, maxRequestBarsForInterval, normalizeChartInterval } from "../../chart-engine/src/intervals";
-import { isRealtimeControlPayload, isRealtimeLayerPayload, normalizeCandleEvent, normalizeCandleSnapshot, normalizeRealtimeLayerEvent } from "../../chart-engine/src/marketDataAdapter";
-import { buildChartAgentContext, buildChartProposalRequest } from "../../chart-engine/src/proposals";
-import { buildRenderScene } from "../../chart-engine/src/renderScene";
+} from "../packages/chart-engine/src/agentReference";
+import { applyCandleEvent, applySnapshotToCandles, candleKey } from "../packages/chart-engine/src/candleStore";
+import { createChartDocument, normalizeChartDocument } from "../packages/chart-engine/src/chartDocuments";
+import { findTargetChartPanel } from "../packages/chart-engine/src/chartPanelSelection";
+import { executeChartCommand, executeChartCommandGroup, makeChartCommand, validateChartProposal } from "../packages/chart-engine/src/commands";
+import { buildTrendParallelLines, projectTrendLine } from "../packages/chart-engine/src/drawingGeometry";
+import { applyDisplayContinuity } from "../packages/chart-engine/src/displayContinuity";
+import { defaultVisibleBarsForInterval, maxRequestBarsForInterval, normalizeChartInterval } from "../packages/chart-engine/src/intervals";
+import { isRealtimeControlPayload, isRealtimeLayerPayload, normalizeCandleEvent, normalizeCandleSnapshot, normalizeRealtimeLayerEvent } from "../packages/chart-engine/src/marketDataAdapter";
+import { buildChartAgentContext, buildChartProposalRequest } from "../packages/chart-engine/src/proposals";
+import { buildRenderScene } from "../packages/chart-engine/src/renderScene";
 import {
   chartRuntimeReducer,
   createInitialChartRuntimeState,
   getLiveTradeForSymbol,
   maxInactiveCandleCacheKeys,
   type ChartRuntimePanel
-} from "../../chart-engine/src/runtime";
-import { createCoordinateTransform } from "../../chart-engine/src/scales";
-import { DEFAULT_CHART_SYMBOL, defaultWatchlistSymbols, normalizeHotRankingPayload, normalizeSupportedSymbol, normalizeWatchlistPayload } from "../../chart-engine/src/symbols";
-import { fallbackChartStyle, normalizeChartStyle, setDefaultChartStyle } from "../../chart-engine/src/theme";
-import type { CandleData, ChartPendingPreview, ChartProposal } from "../../chart-engine/src/types";
+} from "../packages/chart-engine/src/runtime";
+import { createCoordinateTransform } from "../packages/chart-engine/src/scales";
+import { DEFAULT_CHART_SYMBOL, defaultWatchlistSymbols, normalizeHotRankingPayload, normalizeSupportedSymbol, normalizeWatchlistPayload } from "../packages/chart-engine/src/symbols";
+import { fallbackChartStyle, normalizeChartStyle, setDefaultChartStyle } from "../packages/chart-engine/src/theme";
+import type { CandleData, ChartPendingPreview, ChartProposal } from "../packages/chart-engine/src/types";
 import { normalizeAgentEntityResolveResponse, normalizeAgentLayoutResolveResponse } from "../src/agent/agentAnalysisClient";
 import {
   agentReferenceChipKind,
@@ -234,7 +234,7 @@ import {
   resolveHorizontalWheelDelta,
   resolveViewportVisibleCount,
   zoomViewport
-} from "../../chart-engine/src/viewport";
+} from "../packages/chart-engine/src/viewport";
 import {
   clampRightOffset as frontendClampRightOffset,
   clampVisibleCount as frontendClampVisibleCount,

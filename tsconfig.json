@@ -19,10 +19,10 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@gops/chart-engine": ["../chart-engine/src/index.ts"],
-      "@gops/chart-engine/*": ["../chart-engine/src/*"]
+      "@gops/chart-engine": ["./packages/chart-engine/src/index.ts"],
+      "@gops/chart-engine/*": ["./packages/chart-engine/src/*"]
     }
   },
-  "include": ["src", "../chart-engine/src"],
+  "include": ["src", "packages/chart-engine/src"],
   "references": []
 }

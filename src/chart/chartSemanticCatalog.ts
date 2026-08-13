@@ -1,4 +1,4 @@
-import catalog from "../../../../shared/chart-contract/chart-semantics.ko.json";
+import catalog from "../../shared/chart-contract/chart-semantics.ko.json";
 
 type SemanticSection = Record<string, string>;
 

@@ -1,0 +1,126 @@
+name: Deploy dev to EKS
+
+# gops-frontend 이미지를 빌드해 ECR에 push하고 EKS Deployment를 롤아웃합니다.
+# 저장소 분리 전에는 gops-backend의 deploy-dev.yml이 담당하던 역할입니다.
+#
+# 필요한 설정 (저장소 Settings > Secrets and variables > Actions):
+#   secrets.AWS_ROLE_TO_ASSUME   OIDC로 assume할 IAM role ARN
+#                                (gops-backend와 동일한 role을 쓰되, 이 저장소가
+#                                 sub 조건에 포함되도록 trust policy를 갱신해야 합니다)
+# Service/Ingress와 나머지 k8s 매니페스트는 gops-backend 저장소가 소유합니다.
+# 이 워크플로는 gops-frontend Deployment의 이미지 태그만 갱신합니다.
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev-frontend
+  cancel-in-progress: false
+
+env:
+  AWS_ACCOUNT_ID: "<aws-account-id>"
+  AWS_REGION: ap-northeast-2
+  DOCKER_PLATFORM: linux/amd64
+  EKS_CLUSTER_NAME: gops-eks-cluster
+  K8S_NAMESPACE: alfaka-market-data
+  DEPLOYMENT_NAME: gops-frontend
+  CONTAINER_NAME: gops-frontend
+  ECR_FRONTEND_REPO: <aws-account-id>.dkr.ecr.ap-northeast-2.amazonaws.com/alfaka-dev-gops-frontend
+
+jobs:
+  deploy:
+    name: Build, push, and roll out frontend
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          npm run test:chart
+          npm run test:simulator
+          npm run test:layout
+          npm run test:ai-coach
+          npm run test:alerts
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Load Logo.dev build key from AWS Secrets Manager
+        env:
+          LOGODEV_SECRET_NAME: icon/logodev
+        run: ./scripts/load-logodev-build-env.sh
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+
+      - name: Build and push image
+        run: |
+          docker buildx build \
+            --platform "$DOCKER_PLATFORM" \
+            --push \
+            --build-arg "VITE_LOGO_DEV_ATTRIBUTION=${VITE_LOGO_DEV_ATTRIBUTION:-true}" \
+            --build-arg "LOGODEV_PUB_KEY=${LOGODEV_PUB_KEY}" \
+            --build-arg "VITE_LOGO_DEV_PUBLISHABLE_KEY=${VITE_LOGO_DEV_PUBLISHABLE_KEY}" \
+            -f docker/Dockerfile \
+            -t "${ECR_FRONTEND_REPO}:${IMAGE_TAG}" \
+            .
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+
+      - name: Roll out deployment
+        run: |
+          kubectl set image "deployment/${DEPLOYMENT_NAME}" \
+            "${CONTAINER_NAME}=${ECR_FRONTEND_REPO}:${IMAGE_TAG}" \
+            -n "$K8S_NAMESPACE"
+          kubectl rollout status "deployment/${DEPLOYMENT_NAME}" \
+            -n "$K8S_NAMESPACE" --timeout=600s
+
+      - name: Smoke test
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl -fsS https://stargops.com/ >/dev/null; then
+              echo "Smoke passed"
+              exit 0
+            fi
+            echo "Smoke retry ${attempt}/20"
+            sleep 15
+          done
+          curl -i -fsS https://stargops.com/ >/dev/null
+
+      - name: Roll back failed rollout
+        if: failure()
+        run: |
+          kubectl rollout undo "deployment/${DEPLOYMENT_NAME}" -n "$K8S_NAMESPACE" || true
+          kubectl rollout status "deployment/${DEPLOYMENT_NAME}" \
+            -n "$K8S_NAMESPACE" --timeout=600s || true
