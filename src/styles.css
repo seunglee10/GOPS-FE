@@ -58,6 +58,7 @@
   --framer-ink-muted-rgb: 153 153 153;
   --framer-canvas: #232323;
   --framer-canvas-rgb: 35 35 35;
+  --framer-header: #1b1b1b;
   --framer-surface-1: #272727;
   --framer-surface-2: #272727;
   --framer-hairline: #262626;
@@ -97,6 +98,7 @@
   --coinbase-canvas-mid: var(--framer-canvas);
   --coinbase-canvas-end: var(--framer-canvas);
   --coinbase-app-canvas: var(--framer-canvas);
+  --coinbase-header: var(--framer-header);
   --coinbase-panel: #272727;
   --coinbase-panel-strong: #272727;
   --coinbase-panel-muted: #272727;
@@ -655,7 +657,7 @@
   border: 1px solid #333333;
   border-radius: 6px;
   padding: 8px;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   color: #ffffff;
   pointer-events: none;
 }
@@ -871,7 +873,7 @@
   border: 1px solid #333333;
   border-radius: 7px;
   padding: 10px;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   color: #ffffff;
   box-shadow: var(--surface-floating-depth-shadow);
 }
@@ -4324,7 +4326,7 @@ h2 {
     z-index: 9;
     display: block;
     border: 0;
-    background: color-mix(in srgb, #1b1b1b 72%, transparent);
+    background: color-mix(in srgb, var(--coinbase-header) 72%, transparent);
     opacity: 0;
     pointer-events: none;
     transition: opacity 160ms ease;
@@ -14162,7 +14164,7 @@ textarea:focus,
 
 /* Monochrome command surfaces: dark framing with solid white controls. */
 .workspace-top-nav {
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   color: #ffffff;
 }
 
@@ -14314,7 +14316,7 @@ textarea:focus,
   border: 0;
   border-radius: 999px;
   padding: 4px 6px 4px 15px;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   color: #ffffff;
   box-shadow: inset 0 0 0 1px var(--agent-bar-stroke);
 }
@@ -20173,7 +20175,7 @@ textarea:focus,
   border: 1px solid var(--coinbase-hairline-strong);
   border-radius: 6px;
   padding: 11px 12px;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   box-shadow: none;
   color: var(--color-text);
   -webkit-backdrop-filter: none;
@@ -26795,7 +26797,7 @@ textarea:focus,
   min-width: 17px;
   height: 17px;
   place-items: center;
-  border: 2px solid #1b1b1b;
+  border: 2px solid var(--coinbase-header);
   border-radius: 999px;
   padding-inline: 3px;
   background: var(--color-danger);
@@ -28880,7 +28882,7 @@ textarea:focus,
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   flex: 0 0 auto;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   border-bottom: 1px solid #333333;
 }
 
@@ -28891,7 +28893,7 @@ textarea:focus,
   color: #999999;
   border: 0;
   border-right: 1px solid #333333;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   font: var(--type-button);
   letter-spacing: var(--type-button-letter-spacing);
   text-transform: var(--type-button-text-transform);
@@ -28916,7 +28918,7 @@ textarea:focus,
 }
 
 .compare-cockpit-tabs button[aria-selected="true"] {
-  color: #1b1b1b;
+  color: var(--coinbase-header);
   background: #33adff;
 }
 

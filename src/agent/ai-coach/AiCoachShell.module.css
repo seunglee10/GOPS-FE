@@ -138,7 +138,7 @@
 .shell[data-page="2"] > footer,
 .shell[data-page="4"] > footer {
   border-color: var(--coinbase-hairline-strong);
-  background: #1b1b1b;
+  background: var(--coinbase-header);
 }
 
 .shell[data-page="2"] > footer > div .active,
