@@ -6,6 +6,7 @@ import {
   type IntentRoute
 } from "./agentAnalysis";
 import type { AgentLayoutProposal } from "../layout/agentLayoutTypes";
+import { readArray, readObject } from "../shared/json";
 
 const AGENT_REPORT_TERMINAL_STATUSES = new Set(["completed", "deep_completed", "failed", "canceled"]);
 const AGENT_REPORT_POLL_INTERVAL_MS = 1000;
@@ -439,14 +440,6 @@ function sleep(milliseconds: number, signal?: AbortSignal): Promise<void> {
     };
     signal?.addEventListener("abort", handleAbort, { once: true });
   });
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {

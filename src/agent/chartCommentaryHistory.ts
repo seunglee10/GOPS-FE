@@ -15,6 +15,7 @@ import {
   type WorkspaceLayoutMetrics
 } from "../layout/panelLayout";
 import { userVisibleWarnings } from "../layout/wildPanel";
+import { readArray, readObject } from "../shared/json";
 
 export const chartCommentaryHistoryLimit = 5;
 
@@ -354,14 +355,6 @@ function normalizePending(value: unknown, chartDocumentId: string): ChartComment
 
 function uniqueStrings(values: unknown[]): string[] {
   return [...new Set(values.map(readString).filter((item): item is string => Boolean(item)))];
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {

@@ -23,6 +23,7 @@ import type {
   TradeCase
 } from "./ai-coach/types";
 import { normalizeChartExplanation, type ChartExplanation } from "./chartExplanation";
+import { readArray, readObject } from "../shared/json";
 
 export type AgentEvidenceItem = {
   provider: string;
@@ -1065,14 +1066,6 @@ function formatSafetyNotice(finalResponse?: FinalResponse | null): string | null
     return "안전 처리: 민감하거나 부적절한 텍스트가 마스킹되었습니다.";
   }
   return null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
 function readString(value: unknown): string | null {

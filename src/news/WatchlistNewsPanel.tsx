@@ -9,6 +9,7 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { NewsFlipCard, type NewsFlipCardItem } from "./NewsFlipCard";
 import { LogoDevAttribution, StockLogo } from "../components/StockLogo";
+import { readArray, readObject } from "../shared/json";
 
 const REFRESH_INTERVAL_MS = 60_000;
 
@@ -746,14 +747,6 @@ function relativeTimeText(value: string) {
   }
   const diffHours = Math.round(diffMinutes / 60);
   return diffHours < 24 ? `${diffHours}시간 전` : `${Math.round(diffHours / 24)}일 전`;
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {

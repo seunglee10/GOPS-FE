@@ -1,4 +1,5 @@
 import type { DrawingEntity } from "./types";
+import { asString } from "../shared/json";
 
 export type AnalysisAssetInterval = "1m" | "5m" | "10m" | "1h" | "4h" | "1D" | "1W";
 export type AnalysisAssetStatus = "ready";
@@ -822,6 +823,3 @@ function asRecord(value: unknown): Record<string, any> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
 }
 
-function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}

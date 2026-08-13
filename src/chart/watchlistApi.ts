@@ -1,4 +1,5 @@
 import type { ChartSymbolDto } from "./types";
+import { asString } from "../shared/json";
 
 export type WatchlistPayload = {
   source: string;
@@ -96,6 +97,3 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? value as Record<string, unknown> : {};
 }
 
-function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}

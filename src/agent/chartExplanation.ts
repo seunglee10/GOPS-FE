@@ -1,3 +1,5 @@
+import { readArray, readObject } from "../shared/json";
+
 export type ChartExplanationAssetIdentity = {
   assetVersion: string | null;
   algorithmVersion: string | null;
@@ -170,14 +172,6 @@ function normalizeAnchor(value: unknown): ChartExplanationAnchor | null {
 
 function uniqueStrings(values: unknown[]): string[] {
   return [...new Set(values.map(readString).filter((item): item is string => Boolean(item)))];
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {
