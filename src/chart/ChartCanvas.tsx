@@ -41,6 +41,7 @@ import {
 } from "./orderFlowRender";
 import { formatSemanticTimestamp, type SemanticCandleUnit, type SemanticExpansion, type SemanticRenderUnit, type SemanticTimeGapUnit } from "./semanticTimeline";
 import { readThemeColors, resolveRawPaletteColor, resolveThemeColor, type ThemeColors, type ThemeColorToken } from "../theme/colors";
+import { subscribeThemeChange } from "../theme/themeMode";
 import {
   applyCanvasTypography,
   CANVAS_FONT_FAMILY,
@@ -234,10 +235,13 @@ export function ChartCanvas({
     scheduleOverlayDrawRef.current = scheduleOverlayDraw;
     observer.observe(stack);
     window.addEventListener("resize", scheduleBaseDraw);
+    // drawBase가 CSS 변수를 매번 다시 읽으므로, 테마 전환에는 리드로우만 걸면 된다.
+    const unsubscribeTheme = subscribeThemeChange(scheduleBaseDraw);
     scheduleBaseDraw();
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", scheduleBaseDraw);
+      unsubscribeTheme();
       scheduleBaseDrawRef.current = () => undefined;
       scheduleOverlayDrawRef.current = () => undefined;
       if (baseAnimationFrame !== null) {

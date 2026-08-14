@@ -37,6 +37,7 @@ import type { AgentHeaderNotice } from "./agentHeaderNotice";
 import type { AgentLayoutProposal } from "../layout/agentLayoutTypes";
 import { buildUiProposalLayoutProposal } from "../layout/uiProposalLayout";
 import type { AuthUser } from "../auth/AuthProvider";
+import { ThemeToggle } from "../theme/ThemeToggle";
 
 const SimulatorControl = lazy(() => import("../simulator/SimulatorControl")
   .then((module) => ({ default: module.SimulatorControl })));
@@ -414,6 +415,7 @@ export function BottomCommandBar({
           <Suspense fallback={<div className="simulator-mode-control" aria-hidden="true" />}>
             <SimulatorControl />
           </Suspense>
+          <ThemeToggle />
           <HeaderNotificationMenu
             canUseAlerts={canUseAlerts}
             authLoading={authLoading}

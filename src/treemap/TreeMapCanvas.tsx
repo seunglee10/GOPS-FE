@@ -13,6 +13,7 @@ import {
   type TreeMapOpacityScale
 } from "./treemapColors";
 import { readThemeColors, type ThemeColors } from "../theme/colors";
+import { useThemeVersion } from "../theme/themeMode";
 import { applyCanvasTypography, CANVAS_FONT_FAMILY, nearestTypeRole, TYPE_ROLE } from "../theme/typography";
 
 type TreeMapCanvasProps = {
@@ -113,6 +114,7 @@ export function TreeMapCanvas({
     () => buildHoverPanelModel(hoverState, tiles, compact),
     [compact, hoverState, tiles]
   );
+  const themeVersion = useThemeVersion();
 
   useEffect(() => {
     tilesRef.current = tiles;
@@ -154,7 +156,9 @@ export function TreeMapCanvas({
     }
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     drawTreeMap(context, size, tiles, hoverState, opacityScale, highlightedSymbol);
-  }, [highlightedSymbol, hoverState, opacityScale, size, tiles]);
+    // themeVersion은 그리기에 직접 쓰이지 않는다. drawTreeMap이 CSS 변수를 매번
+    // 다시 읽으므로, 테마 전환에서 리드로우를 걸기 위한 deps다.
+  }, [highlightedSymbol, hoverState, opacityScale, size, themeVersion, tiles]);
 
   const updateHover = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!interactive) {
