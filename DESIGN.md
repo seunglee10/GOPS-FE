@@ -1,7 +1,7 @@
 ---
 version: alpha-current
 name: GOPS workspace design system
-description: "A dark, dense market-analysis workspace built around a full-screen heatmap or chart canvas, compact flat panels, and a bottom agent command bar. The visual priority is repeat trading/research work: scan fast, compare panels, keep chrome quiet, and reserve accent color for action, focus, and live market state."
+description: "A dense market-analysis workspace built around a full-screen heatmap or chart canvas, compact flat panels, and a bottom agent command bar. Ships light (default) and dark themes off one primitive token pair. The visual priority is repeat trading/research work: scan fast, compare panels, keep chrome quiet, and reserve accent color for action, focus, and live market state."
 source:
   app: gops-frontend
   styles: src/styles.css
@@ -44,8 +44,9 @@ explicitly changes.
   not like a separate dashboard frame.
 - Favor dense but calm information surfaces. This is an operational tool for
   repeated scanning and comparison.
-- Use the locked three-dark surface hierarchy, white/gray text, and one blue
-  action color for selection and focus.
+- Use the locked three-surface hierarchy, neutral ink, and one blue action color
+  for selection and focus. Dark separates the three surfaces by fill; light
+  makes all three white and separates them by hairline.
 - Avoid marketing composition: no hero sections, no oversized editorial copy,
   no decorative blobs, no promo cards.
 - Use icon controls for tools and compact commands. Text buttons are reserved
@@ -57,27 +58,33 @@ explicitly changes.
 
 The active tokens live in `src/styles.css`.
 
+색은 두 테마를 가진다. **라이트가 기본값**이고 맨몸 `:root`에 산다. 다크는
+`:root[data-theme="dark"]`에서 원시 토큰만 되돌린다 — 파생 토큰
+(`--coinbase-*`, `--gops-*`, `--color-*`)은 손대지 않아도 따라온다. 새 색을
+추가할 때도 이 규칙을 지킨다: 원시 토큰 한 쌍만 정의하고 파생은 건드리지 않는다.
+
 ```yaml
 colors:
-  header: "#1b1b1b"
-  canvas: "#232323"
-  chart-canvas: "#232323"
-  panel: "#272727"
-  panel-strong: "#272727"
-  control: "#272727"
-  ink: "#ffffff"
-  ink-muted: "#999999"
-  muted-soft: "#6f6f6f"
-  hairline: "#262626"
-  hairline-strong: "#333333"
-  accent-blue: "#0099ff"
-  accent-blue-active: "#33adff"
-  point-yellow: "#fff436"
-  point-orange: "#ff490a"
-  point-purple: "#9c3dff"
-  up: "#22c55e"
-  down: "#ff5577"
-  caution: "#ff7a3d"
+  # 라이트 (기본) / 다크
+  header: "#ffffff / #1b1b1b"
+  canvas: "#ffffff / #232323"
+  chart-canvas: "#ffffff / #232323"
+  panel: "#ffffff / #272727"
+  panel-strong: "#ffffff / #272727"
+  control: "#ffffff / #272727"
+  ink: "#16181c / #ffffff"
+  ink-muted: "#5f6570 / #999999"
+  muted-soft: "#8a9099 / #6f6f6f"
+  hairline: "#e4e4e7 / #262626"
+  hairline-strong: "#d0d0d5 / #333333"
+  accent-blue: "#0b6bcb / #0099ff"
+  accent-blue-active: "#0952a5 / #33adff"
+  point-yellow: "#a16207 / #fff436"
+  point-orange: "#c2410c / #ff490a"
+  point-purple: "#7c22ce / #9c3dff"
+  up: "#22c55e"          # 테마 공통
+  down: "#ff5577"        # 테마 공통
+  caution: "#b45309 / #ff7a3d"
 
 layout:
   top-nav-height: 48px
@@ -116,6 +123,44 @@ typography:
   pricing-card-title: "20px / 475 / 1.3 / 0"
 ```
 
+### 테마 전환
+
+`<html>`의 `data-theme` 속성으로 고른다. 속성이 없으면 라이트다.
+
+라이트에서 액센트 색은 다크 값을 그대로 쓰지 않는다. 다크 팔레트를 흰 배경에
+그대로 올리면 accent-blue `#0099ff`가 3.00:1, point-yellow `#fff436`이 1.15:1로
+WCAG AA에 미달한다. 위 표의 라이트 값은 흰 배경 기준 4.5:1 이상을 만족하도록
+다시 잡은 값이다. 라이트 색을 새로 고를 때도 이 기준을 지킨다.
+
+**단, 상승/하락(`up`/`down`)은 예외로 테마 공통이다.** 증시지도 타일이 이 색을
+투명도 48~92%로 캔버스에 합성하는데, 낮은 투명도가 다크에서는 "더 짙게"인 반면
+흰 캔버스에서는 "더 옅게"로 방향이 뒤집힌다. 여기에 AA를 맞추려 어둡게 잡은 값을
+넣으면 넓은 면에서 채도가 죽어 회색빛이 된다(`#0b7a42`를 흰 배경에 48%로 올리면
+`#8abfa4`). 시장 색은 식별이 대비보다 우선하므로 두 테마 모두 같은 값을 쓴다.
+
+짙게 칠해진 타일 위 라벨은 `--color-tile-text-inverse`로 뒤집힌다. 그 뿌리인
+`--coinbase-on-dark`는 "어두운 면 위의 잉크"라는 고정된 맥락이라 테마를 따라가지
+않는다 — 두 테마 모두 `#ffffff`다. 원시 잉크 토큰(`--framer-ink`)에 연결하면
+라이트에서 검정이 되어 뒤집기 장치가 무너진다.
+
+### 서피스 계층
+
+다크는 면 색 차이로 계층을 만든다 — header `#1b1b1b` < canvas `#232323` <
+panel `#272727`. 테두리는 쓰지 않는다.
+
+라이트는 셋 다 `#ffffff`라 면 색으로 계층을 만들 수 없다. 대신 hairline
+(`#e4e4e7`)이 패널 경계를 지는 유일한 수단이다. 이건 장식용 테두리 금지 규칙의
+예외가 아니라, 라이트에서 테두리가 구조적 역할을 넘겨받는다는 뜻이다.
+
+패널 규칙은 전부 `border: 0`이고 `box-sizing: border-box`가 전역이 아니라서,
+테두리를 실제 `border`로 걸면 레이아웃이 밀린다. 대신
+`--app-panel-glass-shadow`가 `inset 0 0 0 1px var(--app-panel-glass-border)`를
+들고 있고, 패널은 `box-shadow: var(--app-panel-glass-shadow)`로 이 링을 받는다.
+다크에서는 `--app-panel-glass-border`가 `transparent`라 같은 링이 무효화된다.
+
+새 패널 표면을 만들 때 `box-shadow: none`을 직접 쓰지 말고 이 토큰을 쓴다.
+쓰지 않으면 라이트에서 그 패널만 경계가 사라진다.
+
 ### 토큰이 아닌 관용값
 
 다음 값은 CSS 변수가 아니라 각 규칙에 직접 적는다. 디자인 결정이 아니라
@@ -137,11 +182,15 @@ typography:
 
 - 앱 크롬: `.workspace-top-nav`, `.workspace-bottom-nav .agent-box`,
   `.compare-cockpit-tabs`, AI 코치 셸 footer
-- 캔버스보다 어두운 오버레이: tooltip, 비교 사이드바 backdrop,
+- 캔버스와 구분되는 오버레이: tooltip, 비교 사이드바 backdrop,
   점수 분해 패널
 
 두 역할 모두 같은 값을 쓰므로 토큰 하나로 다룬다. 한쪽만 바꿔야 하는 상황이
 생기면 그때 역할을 분리하고 이 문서를 함께 고친다.
+
+다크에서는 이 톤이 캔버스보다 **어두워서** 오버레이 역할을 겸했다. 라이트에서는
+헤더도 캔버스도 `#ffffff`라 그 대비가 사라진다. 오버레이 쪽 역할은 hairline이나
+`surface-dark` 믹스로 넘겨야 하며, 이건 두 역할을 분리해야 하는 첫 사례다.
 
 ## Typography
 
@@ -292,11 +341,22 @@ backdrop-filter: none;
 ```
 
 `--app-panel-glass-background` is a compatibility name whose active value is
-the solid panel color `#272727`. It does not authorize transparency, gradients,
-blur, glow, or shadow. Structural surfaces use only the locked hierarchy:
-`#1b1b1b` for the header and bottom command pill, `#232323` for the app/chart
-canvas, and `#272727` for panels and controls. Do not invent nearby black or
-gray surface colors.
+the solid panel color — `#ffffff` in light, `#272727` in dark. It does not
+authorize transparency, gradients, blur, glow, or shadow. Structural surfaces
+use only the locked hierarchy: header and bottom command pill, app/chart canvas,
+and panels/controls. In dark those are `#1b1b1b` / `#232323` / `#272727`; in
+light all three are `#ffffff` and the hairline carries the separation. Do not
+invent nearby black, white, or gray surface colors — always reference the token.
+
+비교 코크핏(`.compare-cockpit*`)은 예외적으로 다크 팔레트 전체를 하드코딩으로
+복제해 갖고 있었다(표면 6종·잉크 5종·액센트 5종, 156곳). 이제 전부 공용 토큰을
+쓴다. 이 과정에서 `#303030`·`#3a3a3a`·`#3b3b3b`·`#202020`·`#484848` 같은
+"근처 회색 변종"이 잠금된 계층으로 흡수되어 다크 톤이 미세하게 움직였다 —
+아래 Do Not의 금지 조항을 뒤늦게 적용한 결과이지 새 결정이 아니다.
+
+`--panel-black`은 네 곳에서 `#272727`로 지역 재선언되던 별칭이었다. 이제 값이
+`var(--app-panel-glass-background)`라 사용처 13곳이 테마를 따라간다. 새 패널에
+이런 지역 색 별칭을 다시 만들지 않는다.
 
 Applies to:
 
@@ -313,12 +373,12 @@ Applies to:
 Recommendation selection has one narrow product-directed exception: a selected
 row in `recommendationsList` uses a white paper surface with black ink. The
 `recommendationExplain` report and surrounding panel chrome remain in the
-locked dark hierarchy. This exception does not authorize white cards or
+locked hierarchy. This exception does not authorize white cards or
 alternate structural surfaces in other panels; blue remains the focus/action
 color and market status keeps its semantic green, red, and caution colors.
 Recommendation scores use plain blue text without a fill; selected
-score-profile presets retain the white fill with black ink. Score hover details stay on the locked `#1b1b1b`
-header surface with a `#333333` hairline. Recommendation weight segments use
+score-profile presets retain the white fill with black ink. Score hover details
+stay on the header surface with a `hairline-strong` edge. Recommendation weight segments use
 only the approved blue, yellow, orange, purple, green, and red point accents.
 
 ### Panel Chrome
@@ -374,12 +434,40 @@ promotional tile.
 The top nav is quiet:
 
 - fixed at top, 48px tall;
-- solid `#1b1b1b` background with white content;
-- active preset uses a white pill with black text;
+- solid header-token background with ink-token content;
+- active preset uses an ink-filled pill with inverted text;
 - center slot is reserved for the preset dock in chart mode;
-- right side contains only direct login/logout state.
+- right side carries the simulator control, notifications, theme toggle, and
+  login/logout state.
 
 There is no top alert/settings drawer trigger after the side-panel removal.
+
+`.workspace-theme-toggle`은 아이콘 전용 컨트롤로, 클릭할 때마다
+Light → Dark → System을 순환한다. 선택은 `gops:theme` 키로 저장되고,
+`index.html`의 인라인 부트스트랩이 첫 페인트 전에 `data-theme`를 세팅해
+새로고침 시 깜빡임을 막는다.
+
+### 선택된 프리셋
+
+"지금 어느 화면인가"를 나타내는 유일한 신호다. 알약은 버튼 배경이 아니라 뒤에서
+슬라이드하는 `.layout-preset-active-indicator`가 그린다 — 버튼은 `transparent`로
+두어 알약이 비쳐 보이게 하고, 활성 라벨만 `--color-background`로 뒤집어 알약 위에서
+읽히게 한다.
+
+| | 알약 | 라벨 |
+| --- | --- | --- |
+| 라이트 | `--color-text` → `#16181c` | `--color-background` → `#ffffff` |
+| 다크 | `--color-text` → `#ffffff` | `--color-background` → `#232323` |
+
+선택 상태는 hover·focus·press보다 우선한다. 마우스를 얹었다고 현재 화면 표시가
+사라지면 안 되므로, 프리셋 독의 `.is-active` 규칙이 이 세 상태를 모두 잠근다.
+`.is-active`를 눌림 상태(`:active`) 규칙과 같은 선택자 묶음에 넣지 않는다 —
+선택은 상태이지 동작이 아니라서 `translateY` 같은 눌림 피드백을 받으면 안 된다.
+
+캔버스 렌더러(차트·트리맵·오더플로우)는 CSS 변수를 매 draw마다 다시 읽으므로,
+테마 전환에는 리드로우만 걸면 된다. 훅이 가능한 자리는 `useThemeVersion()`을
+deps에 넣고, 명령형 루프는 `subscribeThemeChange()`를 구독한다. 새 캔버스 표면을
+추가하면 둘 중 하나를 반드시 배선한다 — 빠뜨리면 그 캔버스만 옛 테마로 남는다.
 
 ### Bottom Agent Command
 
@@ -499,10 +587,13 @@ Do:
 
 - keep the app full-screen and data-first;
 - keep Asta Sans as the shared UI/data font;
-- use the locked `#1b1b1b` header, `#232323` canvas/chart, and `#272727` panel hierarchy;
-- use `#ffffff` as the only primary white and blue for action, focus, selection,
-  and current-price emphasis;
-- use flat panels with 8px radius, no decorative border, no blur, and no shadow;
+- keep the locked three-surface hierarchy — dark `#1b1b1b` / `#232323` / `#272727`,
+  light all-`#ffffff` separated by hairline;
+- define a new color as a light/dark primitive pair and let derived tokens follow;
+- verify a new light color clears 4.5:1 on `#ffffff` before adopting it;
+- use blue for action, focus, selection, and current-price emphasis;
+- use flat panels with 8px radius, no blur, and no shadow. Borders are structural
+  in light (they carry the panel edge) and absent in dark;
 - use the bottom agent command as the primary global command surface;
 - keep chart and layout tools close to the panel they affect;
 - verify `npm run build` after UI structure changes.
@@ -511,7 +602,9 @@ Do not:
 
 - reintroduce the side rail or side overlay panels;
 - add marketing hero sections or decorative card-heavy pages;
-- introduce arbitrary structural black/gray variants or translucent-black surfaces;
+- introduce arbitrary structural black/white/gray variants or translucent-black surfaces;
+- hardcode a hex in a rule when a token exists, or assume one theme's ink color
+  (`#ffffff` text, `rgb(255 255 255 / a)` overlays) in shared styles;
 - add structural gradients, blur, glow, or shadows to create surface hierarchy;
 - use gradient orbs or decorative bokeh backgrounds;
 - repurpose `legal` or any `pricing-*` role as a generic small or financial-value style;
