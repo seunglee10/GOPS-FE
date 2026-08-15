@@ -100,13 +100,6 @@ import {
   type WorkspaceLayoutMetrics
 } from "./layout/panelLayout";
 import { panelKindForAgentType, panelRegistryEntry } from "./layout/panelRegistry";
-import {
-  incidentResponseAnalysisIntent,
-  incidentResponseLayoutPreset,
-  incidentResponseTransitionDelayMs,
-  isIncidentResponsePrompt,
-  prepareIncidentResponseLayout
-} from "./layout/incidentResponsePreset";
 import { resolveResponsivePanelLayout } from "./layout/responsivePanelLayout";
 import { workspaceTopInset } from "./layout/workspaceMetrics";
 import {
@@ -154,10 +147,6 @@ type ActiveAgentRun = {
   controller: AbortController;
   cancelRequested: boolean;
   chartDocumentId?: string;
-};
-
-type PendingIncidentResponseTransition = {
-  cancelRequested: boolean;
 };
 
 type AgentSubmitResult = "notice" | "chart-shortcut" | "ui-action" | "ignored";
@@ -519,7 +508,6 @@ export function App() {
   const chartPanelHandlesRef = useRef<Map<string, ChartPanelHandle>>(new Map());
   const lastInteractedChartContentIdRef = useRef<string | null>(null);
   const activeAgentRunRef = useRef<ActiveAgentRun | null>(null);
-  const pendingIncidentResponseTransitionRef = useRef<PendingIncidentResponseTransition | null>(null);
   const agentNoticeSequenceRef = useRef(0);
   const agentLayoutHistoryRef = useRef<TiledPanelState[]>([]);
   const lastSavedAgentProposalRef = useRef<string | null>(null);
@@ -583,12 +571,12 @@ export function App() {
     }
   }, [panelState, selectedWildPanelSlotId]);
 
-  const addReportToSelectedWildPanel = useCallback((report: AgentAnalysisReport, preferredSlotId?: string) => {
+  const addReportToSelectedWildPanel = useCallback((report: AgentAnalysisReport) => {
     if (report.status !== "completed" && report.status !== "deep_completed") {
       return;
     }
     setPanelState((current) => {
-      const wildPanelSlotId = resolveWildPanelSlotId(current, preferredSlotId ?? selectedWildPanelSlotId);
+      const wildPanelSlotId = resolveWildPanelSlotId(current, selectedWildPanelSlotId);
       return wildPanelSlotId
         ? addAgentReportToWildPanel(current, wildPanelSlotId, report)
         : current;
@@ -1177,27 +1165,10 @@ export function App() {
   };
 
   const exitLayoutEditMode = () => {
-    const responsePreset = incidentResponseLayoutPreset(presetControls.presets);
-    if (responsePreset && presetControls.activePresetId === responsePreset.id) {
-      const result = presetControls.savePresetLayout(responsePreset.id);
-      if (result.status === "missing") {
-        showAgentNotice("대응 프리셋을 찾지 못해 저장하지 못했습니다.", "error");
-      } else if (result.status === "invalid") {
-        showAgentNotice(result.message, "error");
-      }
-    }
     setLayoutEditMode(false);
   };
 
   const cancelActiveAgentRun = useCallback(() => {
-    const pendingTransition = pendingIncidentResponseTransitionRef.current;
-    if (pendingTransition) {
-      pendingTransition.cancelRequested = true;
-      pendingIncidentResponseTransitionRef.current = null;
-      showAgentNotice("Agent 분석을 중단했습니다.", "info");
-      setAgentBusy(false);
-      return;
-    }
     const run = activeAgentRunRef.current;
     if (!run) {
       setAgentBusy(false);
@@ -1383,10 +1354,6 @@ export function App() {
     }
     const agentContextSymbol = selectedRecommendationSymbol
       || (mainView.mode === "chart" ? mainView.symbol : resolvePresetSymbol());
-    const incidentResponsePrompt = isIncidentResponsePrompt(prompt);
-    const analysisIntent = incidentResponsePrompt
-      ? incidentResponseAnalysisIntent(prompt, agentContextSymbol)
-      : prompt;
     const watchlistContextSymbol = mainView.mode === "chart" ? mainView.symbol : agentContextSymbol;
     const watchlistCommand = resolveWatchlistAgentCommand(prompt, watchlistContextSymbol);
     if (watchlistCommand.status === "clarify") {
@@ -1670,57 +1637,12 @@ export function App() {
       return "notice";
     }
     if (mainView.mode !== "chart") {
-      if (!incidentResponsePrompt) {
-        showAgentNotice("기업명/티커만 입력하면 차트를 열 수 있고, 분석은 차트 화면에서 가능합니다.", "error");
-        return "notice";
-      }
-    }
-
-    let analysisPanelState = panelState;
-    let incidentWildPanelSlotId: string | undefined;
-    let responsePreset: LayoutPreset | null = null;
-    let responseLayout: TiledPanelState | null = null;
-    if (incidentResponsePrompt) {
-      responsePreset = incidentResponseLayoutPreset(presetControls.presets);
-      if (!responsePreset) {
-        showAgentNotice("대응 프리셋 지정하기에서 프리셋을 먼저 만들어 주세요.", "error");
-        return "notice";
-      }
-      responseLayout = buildPresetLayoutForCurrent(responsePreset);
-      if (!responseLayout) {
-        showAgentNotice("저장된 대응 프리셋을 불러오지 못했습니다.", "error");
-        return "notice";
-      }
+      showAgentNotice("기업명/티커만 입력하면 차트를 열 수 있고, 분석은 차트 화면에서 가능합니다.", "error");
+      return "notice";
     }
 
     const runChartPrompt = async () => {
-      if (incidentResponsePrompt && responsePreset && responseLayout) {
-        setAgentBusy(true);
-        const pendingTransition: PendingIncidentResponseTransition = { cancelRequested: false };
-        pendingIncidentResponseTransitionRef.current = pendingTransition;
-        await new Promise<void>((resolve) => {
-          window.setTimeout(resolve, incidentResponseTransitionDelayMs);
-        });
-        if (pendingTransition.cancelRequested || pendingIncidentResponseTransitionRef.current !== pendingTransition) {
-          return;
-        }
-        pendingIncidentResponseTransitionRef.current = null;
-        const prepared = prepareIncidentResponseLayout(responseLayout, agentContextSymbol);
-        if (prepared.status === "invalid") {
-          showAgentNotice(prepared.message, "error");
-          setAgentBusy(false);
-          return;
-        }
-        analysisPanelState = prepared.state;
-        incidentWildPanelSlotId = prepared.wildPanelSlotId;
-        presetControls.applyPreparedPreset(responsePreset.id, prepared.state);
-        setSelectedWildPanelSlotId(prepared.wildPanelSlotId ?? null);
-        setLayoutEditMode(false);
-        setPendingPlacementPick(null);
-        setSemanticSelection(null);
-        clearChartSemanticSelections();
-      }
-      if (!incidentResponsePrompt && hasExplicitLayoutSyntax(prompt)) {
+      if (hasExplicitLayoutSyntax(prompt)) {
         setAgentBusy(true);
         try {
           const interactiveContext = buildInteractiveAgentContext(
@@ -1825,23 +1747,21 @@ export function App() {
           symbol: opensChartCommentary
             ? chartContextSymbol(interactiveContext.chartContext) ?? agentContextSymbol
             : agentContextSymbol,
-          intent: analysisIntent,
+          intent: prompt,
           routerMode: "hybrid",
-          messages: [{ role: "user", content: analysisIntent }],
+          messages: [{ role: "user", content: prompt }],
           chartContext: interactiveContext.chartContext,
           references: interactiveContext.references,
           uiContext: interactiveContext.uiContext,
           layoutContext: buildAgentLayoutContext(
-            analysisPanelState,
+            panelState,
             viewportSize,
             agentContextSymbol,
             undefined,
-            incidentResponsePrompt
-              ? chartDocumentSymbolsForLayout(analysisPanelState, chartRuntime)
-              : chartDocumentSymbolsByPanelId,
+            chartDocumentSymbolsByPanelId,
             panelLayoutMetricsRef.current
           ),
-          ...(Object.values(analysisPanelState.contents).some((content) => content.kind === "aiCoach")
+          ...(Object.values(panelState.contents).some((content) => content.kind === "aiCoach")
             ? { coachRequest: { enabled: true as const } }
             : {})
         };
@@ -1861,7 +1781,7 @@ export function App() {
             }
           }
         });
-        if (!incidentResponsePrompt && report.layoutProposal) {
+        if (report.layoutProposal) {
           applyAgentLayoutProposal(report.layoutProposal);
         }
         const tradeProposal = report.tradeConditionProposals[0];
@@ -1894,20 +1814,20 @@ export function App() {
               panelLayoutMetricsRef.current
             ).state);
           } else {
-            addReportToSelectedWildPanel(report, incidentWildPanelSlotId);
+            addReportToSelectedWildPanel(report);
             showAgentNotice("차트 해설 패널을 배치할 공간이 없어 선택한 Wild 패널에 답변을 보냈습니다.", "info");
           }
         } else {
           if (commentarySource) {
             setPanelState((current) => clearChartCommentaryPending(current, commentarySource!.chartDocumentId));
           }
-          addReportToSelectedWildPanel(report, incidentWildPanelSlotId);
+          addReportToSelectedWildPanel(report);
         }
         if (reportStatus === "failed") {
           showAgentNotice(report.summary || "Agent 요청에 실패했습니다.", "error");
         } else if (reportStatus === "canceled") {
           showAgentNotice("Agent 분석을 중단했습니다.", "info");
-        } else if (!incidentResponsePrompt) {
+        } else {
           showAgentNotice(agentReportCompletionMessage(report, agentContextSymbol));
         }
         publishOntologyReport({ symbol: report.symbol, providerEvidence: report.providerEvidence ?? [] });
