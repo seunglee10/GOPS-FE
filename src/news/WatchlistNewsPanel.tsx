@@ -353,7 +353,7 @@ export function WatchlistNewsPanel({
       {loginRequired && (
         <div className="panel-state-row">
           <span>로그인하면 관심종목 뉴스가 표시됩니다</span>
-          <button className="panel-state-action" type="button" onClick={login}>로그인</button>
+          <button className="panel-state-action" type="button" onClick={() => login()}>로그인</button>
         </div>
       )}
 

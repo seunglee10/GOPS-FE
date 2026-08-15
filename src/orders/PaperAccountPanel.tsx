@@ -73,7 +73,7 @@ export function PaperAccountPanel({ defaultSymbol, symbols, onOpenCompany }: Pap
         <div className="paper-account-login">
           <LogIn size={18} aria-hidden="true" />
           <strong>가상계좌를 사용하려면 로그인해 주세요.</strong>
-          <button type="button" disabled={authLoading} onClick={login}>로그인</button>
+          <button type="button" disabled={authLoading} onClick={() => login()}>로그인</button>
         </div>
       ) : loading && !snapshot ? (
         <div className="paper-account-loading"><LoaderCircle size={18} className="spin" />계좌 조회 중</div>

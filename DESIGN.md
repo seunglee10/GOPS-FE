@@ -85,6 +85,15 @@ colors:
   up: "#22c55e"          # 테마 공통
   down: "#ff5577"        # 테마 공통
   caution: "#b45309 / #ff7a3d"
+  # 소셜 로그인 제공자가 브랜드 가이드로 고정한 값. 우리 팔레트가 아니라서
+  # 테마별 변형을 만들지 않는다 — 라이트/다크에서 같은 색이 정상이다.
+  brand-google-surface: "#ffffff"
+  brand-google-surface-hover: "#f8f9fa"
+  brand-google-border: "#dadce0"
+  brand-google-ink: "#1f1f1f"
+  brand-kakao: "#fee500"
+  brand-kakao-hover: "#fdd835"
+  brand-kakao-ink: "#000000"
 
 layout:
   top-nav-height: 48px
@@ -441,6 +450,37 @@ The top nav is quiet:
   login/logout state.
 
 There is no top alert/settings drawer trigger after the side-panel removal.
+
+### 로그인 페이지
+
+로그인은 워크스페이스 위의 오버레이가 아니라 **자체 URL을 가진 화면**(`/login`)
+이다. 뒤로 가기와 북마크가 동작하고, 인증이 필요해 튕겨낼 때 돌려보낼 주소가
+생기기 때문이다. 상단 로그인 컨트롤은 `/login?returnTo=<현재경로>`로 이동한다.
+
+라우팅 라이브러리는 쓰지 않는다. 경로가 이 하나뿐이라 `src/main.tsx`가
+`window.location.pathname`을 보고 `<LoginPage />`와 워크스페이스 트리 중
+하나만 마운트한다. nginx의 `try_files ... /index.html` 폴백이 새로고침을
+받아준다. 경로가 더 늘어나면 그때 라우터를 도입한다.
+
+- 로그인 페이지에는 워크스페이스 프로바이더(모의계좌·AI 코치·알림 설정)를
+  태우지 않는다. 로그인 화면에서 워크스페이스 API를 호출할 이유가 없다.
+- 이미 로그인한 사용자가 `/login`을 열면 `returnTo`로 즉시 되돌린다.
+- `returnTo`는 `/`로 시작하고 `//`가 아닌 같은 출처 경로만 통과시킨다.
+  서버도 같은 검사를 하지만 클라이언트에서도 막는다.
+- 제공자 버튼은 **예외적으로 각 제공자의 브랜드 가이드를 따른다** — 48px 높이,
+  좌측 16px에 절대 배치한 18px 마크, 중앙 라벨. 구글은 흰 배경에 `#dadce0`
+  테두리, 카카오는 노란 배경에 검은 라벨.
+- 이 예외는 로그인 페이지에만 적용된다. 이걸 근거로 상단 내비나 다른 명령
+  버튼에 브랜드 색을 칠하지 않는다 — quiet 내비 규칙은 그대로다.
+- 브랜드 버튼은 워크스페이스 토큰(`--color-surface` 등)을 쓰지 않는다.
+  제공자가 정한 색이라 테마를 따라 변하면 가이드 위반이다.
+- `.btn-social` 같은 일반적인 클래스명은 반드시 `.login-page` 아래로
+  스코프한다. 전역에 풀어두면 다른 컴포넌트와 충돌한다.
+- 제공자를 추가할 때는 `--color-brand-<provider>-*` 토큰을 더하고
+  `.login-page .btn-<provider>` 규칙만 붙인다.
+
+제공자 동의 화면 자체도 팝업 창이 아니라 **전체 페이지 리다이렉트**로 간다.
+팝업은 차단기와 모바일 브라우저에서 깨지고 `postMessage` 배선을 요구한다.
 
 `.workspace-theme-toggle`은 아이콘 전용 컨트롤로, 클릭할 때마다
 Light → Dark → System을 순환한다. 선택은 `gops:theme` 키로 저장되고,

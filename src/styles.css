@@ -173,6 +173,15 @@
   --color-border: var(--coinbase-hairline);
   --color-rule-soft: var(--coinbase-hairline-soft);
   --color-shadow: var(--coinbase-ink);
+  /* 소셜 로그인 제공자가 브랜드 가이드로 고정한 값. 우리 팔레트가 아니므로
+     테마별 변형을 만들지 않고 라이트/다크 모두 같은 색을 쓴다. */
+  --color-brand-google-surface: #ffffff;
+  --color-brand-google-surface-hover: #f8f9fa;
+  --color-brand-google-border: #dadce0;
+  --color-brand-google-ink: #1f1f1f;
+  --color-brand-kakao: #fee500;
+  --color-brand-kakao-hover: #fdd835;
+  --color-brand-kakao-ink: #000000;
   --color-up: var(--coinbase-semantic-up);
   --color-up-soft: var(--coinbase-semantic-up);
   --color-down: var(--coinbase-semantic-down);
@@ -26954,6 +26963,123 @@ textarea:focus,
   from {
     opacity: 0;
     transform: translateY(-5px);
+  }
+}
+
+.login-page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 24px;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.login-card {
+  display: grid;
+  gap: 24px;
+  width: min(360px, 100%);
+  justify-items: center;
+}
+
+.login-card-header {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+}
+
+.login-card-title {
+  font: var(--type-title-lg);
+}
+
+.login-card-subtitle {
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--type-body-md);
+}
+
+.login-card-error {
+  margin: 0;
+  color: var(--color-danger);
+  font: var(--type-body-md);
+  text-align: center;
+}
+
+.login-card-back {
+  color: var(--color-muted);
+  font: var(--type-body-md);
+  text-decoration: none;
+}
+
+.login-card-back:hover,
+.login-card-back:focus-visible {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+/* 제공자 버튼은 각 브랜드 가이드를 따르므로 워크스페이스 토큰 대신
+   --color-brand-* 고정값을 쓴다. 두 테마에서 같은 모습이 정상이다.
+   클래스명이 일반적이라 반드시 .login-page 아래로 스코프한다. */
+.login-page .login-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.login-page .btn-social {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.login-page .social-icon {
+  position: absolute;
+  left: 16px;
+  width: 18px;
+  height: 18px;
+}
+
+.login-page .btn-social:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.login-page .btn-google {
+  border-color: var(--color-brand-google-border);
+  background-color: var(--color-brand-google-surface);
+  color: var(--color-brand-google-ink);
+}
+
+.login-page .btn-google:hover:not(:disabled),
+.login-page .btn-google:focus-visible {
+  background-color: var(--color-brand-google-surface-hover);
+  box-shadow: 0 1px 2px rgb(60 64 67 / 0.3);
+}
+
+.login-page .btn-kakao {
+  background-color: var(--color-brand-kakao);
+  color: var(--color-brand-kakao-ink);
+}
+
+.login-page .btn-kakao:hover:not(:disabled),
+.login-page .btn-kakao:focus-visible {
+  background-color: var(--color-brand-kakao-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page .btn-social {
+    transition: none;
   }
 }
 
