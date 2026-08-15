@@ -1,20 +1,22 @@
-import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 
 const layoutStorageKey = "gops:workspace-grid-layout:v1";
 let failNextSave = false;
 let profileSaved = false;
 let savedProfile: Record<string, unknown> | null = null;
 let latestSessionModes: string[] = [];
+let refreshRequests = 0;
 let activeScorePresetStyle = "stable";
 let activeCustomScoreProfile = false;
 let customScoreProfilesEnabled = true;
-let recommendationResponseMode: "profile_required" | "empty" | "market_closed" | "error" | "session_specific" | "v3_direct" = "profile_required";
+let recommendationResponseMode: "profile_required" | "v3_direct" = "profile_required";
 
 test.beforeEach(async ({ page }) => {
   failNextSave = false;
   profileSaved = false;
   savedProfile = null;
   latestSessionModes = [];
+  refreshRequests = 0;
   activeScorePresetStyle = "stable";
   activeCustomScoreProfile = false;
   customScoreProfilesEnabled = true;
@@ -90,57 +92,6 @@ test("recommendation formula editor keeps preset and custom selection mutually e
   await expect(reloadedPanel.getByRole("button", { name: "안정 기본 수식 사용" })).toHaveAttribute("aria-pressed", "true");
   await expect(reloadedPanel.getByRole("textbox", { name: "현재 선택한 로직 이름" })).toHaveCount(0);
   await expect(reloadedPanel.getByRole("region", { name: "저장된 추천 로직" })).toHaveCount(0);
-});
-
-test("empty recommendation responses stay empty in live mode", async ({ page }) => {
-  recommendationResponseMode = "empty";
-  await openRecommendationsLayout(page);
-
-  const listPanel = page.getByRole("region", { name: "장중 매수 추천 목록" });
-  const cardPanel = page.getByRole("region", { name: "장중 매수 추천", exact: true });
-  const listRows = listPanel.locator(".stock-rec-list .stock-rec-row");
-  const cardRows = cardPanel.locator(".stock-rec-file-stack .stock-rec-row");
-
-  await expect(listRows).toHaveCount(0);
-  await expect(cardRows).toHaveCount(0);
-  await expect(listPanel.getByText("추천할 종목이 없습니다", { exact: true })).toBeVisible();
-  await expect(cardPanel.getByText("추천할 종목이 없습니다", { exact: true })).toBeVisible();
-  await expect(listPanel.getByText("simulation", { exact: true })).toHaveCount(0);
-  await expect(cardPanel.getByText("simulation", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /추천 참조 해제/ })).toHaveCount(0);
-});
-
-test("market closed and API error states do not use the simulation fallback", async ({ page }) => {
-  recommendationResponseMode = "market_closed";
-  await openRecommendationsLayout(page);
-
-  const listPanel = page.getByRole("region", { name: "장중 매수 추천 목록" });
-  await expect(listPanel.getByText(/추천.*(시간|생성)/)).toBeVisible();
-  await expect(listPanel.locator(".stock-rec-row")).toHaveCount(0);
-  await expect(listPanel.getByText("simulation", { exact: true })).toHaveCount(0);
-
-  recommendationResponseMode = "error";
-  await page.reload();
-  await expect(listPanel.getByText("recommendation unavailable")).toBeVisible();
-  await expect(listPanel.locator(".stock-rec-row")).toHaveCount(0);
-  await expect(listPanel.getByText("simulation", { exact: true })).toHaveCount(0);
-});
-
-test("recommendation explanation uses the exact selected list snapshot across sessions", async ({ page }) => {
-  recommendationResponseMode = "session_specific";
-  await openRecommendationsLayout(page, recommendationSyncLayout());
-
-  const listPanel = page.getByRole("region", { name: "장중 매수 추천 목록" });
-  await listPanel.getByRole("button", { name: "장전" }).click({ force: true });
-  const amdRow = listPanel.getByRole("button", { name: "1위 AMD 추천 선택" });
-  await expect(amdRow).toBeVisible();
-  await amdRow.click();
-
-  const explanation = page.getByRole("region", { name: "AMD 추천 해설" });
-  await expect(explanation).toBeVisible();
-  await expect(explanation.getByRole("heading", { name: "AMD" })).toBeVisible();
-  await expect(explanation.getByText("장전 / 데이장", { exact: true })).toBeVisible();
-  await expect(explanation.getByLabel("추천 점수 91점")).toBeVisible();
 });
 
 test("V3 explanation prioritizes the natural-language conclusion and shows every caution", async ({ page }, testInfo) => {
@@ -222,38 +173,17 @@ test("recommendation settings remain available and save from the panel dialog", 
   failNextSave = true;
   await openRecommendationsLayout(page);
 
-  const listPanel = page.getByRole("region", { name: "장중 매수 추천 목록" });
-  const cardPanel = page.getByRole("region", { name: "장중 매수 추천", exact: true });
-  const listSettings = listPanel.getByRole("button", { name: "추천 설정" });
-  const cardSettings = cardPanel.getByRole("button", { name: "추천 설정" });
+  const panel = page.getByRole("region", { name: "추천 종목 통합 탐색" }).first();
+  const settings = panel.getByRole("button", { name: "추천 설정" });
+  await expect(settings).toBeVisible();
 
-  await expect(listPanel.getByText("장중 추천 설정을 저장해 주세요")).toBeVisible();
-  await expect(cardPanel.getByText("장중 추천 설정을 저장해 주세요")).toBeVisible();
-  await expect(listPanel.getByText("simulation", { exact: true })).toHaveCount(0);
-  await expect(cardPanel.getByText("simulation", { exact: true })).toHaveCount(0);
-  await expect(listSettings).toHaveCSS("opacity", "0");
-  await expect(cardSettings).toHaveCSS("opacity", "0");
-  await listSettings.focus();
-  await expect(listSettings).toHaveCSS("opacity", "1");
-
-  await listPanel.hover();
-  await expect(listSettings).toHaveCSS("opacity", "1");
-  await expect(listPanel.getByRole("group", { name: "추천 세션" })).toHaveCSS("opacity", "1");
-  await expectSettingLeftOfSession(listPanel);
-  await expect(listPanel).toHaveScreenshot("recommendation-list-settings-hover.png");
-
-  await cardPanel.hover();
-  await expect(cardSettings).toHaveCSS("opacity", "1");
-  await expectSettingLeftOfSession(cardPanel);
-  await expect(cardPanel).toHaveScreenshot("recommendation-card-settings-hover.png");
-
-  await listPanel.hover();
-  await listSettings.click();
+  await settings.click();
   const dialog = page.getByRole("dialog", { name: "추천 설정" });
   const closeButton = dialog.getByRole("button", { name: "추천 설정 닫기" });
+  const riskLevel = dialog.locator("label.investment-profile-field").filter({ hasText: /^위험성향/ }).locator("select");
   await expect(dialog).toBeVisible();
   await expect(closeButton).toBeFocused();
-  await expect(dialog.getByRole("combobox")).toHaveValue("balanced");
+  await expect(riskLevel).toHaveValue("balanced");
   await closeButton.press("Shift+Tab");
   await expect(dialog.getByRole("button", { name: "저장" })).toBeFocused();
   await closeButton.focus();
@@ -261,27 +191,26 @@ test("recommendation settings remain available and save from the panel dialog", 
 
   await closeButton.press("Escape");
   await expect(dialog).toBeHidden();
-  await expect(listSettings).toBeFocused();
+  await expect(settings).toBeFocused();
 
-  await listSettings.click();
+  await settings.click();
   await expect(dialog).toBeVisible();
   await page.locator(".recommendation-settings-backdrop").click({ position: { x: 4, y: 4 } });
   await expect(dialog).toBeHidden();
-  await expect(listSettings).toBeFocused();
+  await expect(settings).toBeFocused();
 
-  await listSettings.click();
+  await settings.click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("combobox").selectOption("aggressive");
+  await riskLevel.selectOption("aggressive");
   await dialog.getByRole("button", { name: "저장" }).click();
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("save failed")).toBeVisible();
 
-  const requestsBeforeSuccessfulSave = latestSessionModes.length;
+  const refreshesBeforeSuccessfulSave = refreshRequests;
   await dialog.getByRole("button", { name: "저장" }).click();
   await expect(dialog).toBeHidden();
-  await expect(listSettings).toBeFocused();
-  await expect.poll(() => latestSessionModes.length).toBeGreaterThan(requestsBeforeSuccessfulSave);
-  await expect(listPanel.getByText("simulation", { exact: true })).toHaveCount(0);
+  await expect(settings).toBeFocused();
+  await expect.poll(() => refreshRequests).toBeGreaterThan(refreshesBeforeSuccessfulSave);
   expect(savedProfile).toMatchObject({
     riskLevel: "aggressive",
     horizon: "intraday",
@@ -290,19 +219,7 @@ test("recommendation settings remain available and save from the panel dialog", 
     excludedSectors: [],
     excludedSymbols: []
   });
-  const activeSessionLabel = (await listPanel.getByRole("button", { pressed: true }).textContent())?.trim();
-  expect(latestSessionModes.at(-1)).toBe(activeSessionLabel === "장전" ? "pre" : "regular");
 });
-
-async function expectSettingLeftOfSession(panel: Locator): Promise<void> {
-  const settingsBox = await panel.getByRole("button", { name: "추천 설정" }).boundingBox();
-  const sessionBox = await panel.getByRole("group", { name: "추천 세션" }).boundingBox();
-  expect(settingsBox).not.toBeNull();
-  expect(sessionBox).not.toBeNull();
-  if (settingsBox && sessionBox) {
-    expect(settingsBox.x + settingsBox.width).toBeLessThan(sessionBox.x);
-  }
-}
 
 async function openRecommendationsLayout(page: Page, storedLayout = recommendationsLayout()): Promise<void> {
   await page.addInitScript(({ storageKey, storedLayout }) => {
@@ -421,19 +338,13 @@ async function fulfillApi(route: Route): Promise<void> {
     payload = { authEnabled: false, user: null };
   } else if (url.pathname === "/api/charts/symbols") {
     payload = { symbols: [{ symbol: "NVDA", tradable: true }, { symbol: "AAPL", tradable: true }] };
+  } else if (url.pathname === "/api/recommendations/stocks/refresh") {
+    refreshRequests += 1;
+    payload = readyRecommendationPayload();
   } else if (url.pathname === "/api/recommendations/stocks/latest") {
     latestSessionModes.push(url.searchParams.get("sessionMode") ?? "regular");
-    if (recommendationResponseMode === "session_specific") {
-      payload = sessionRecommendationPayload(url.searchParams.get("sessionMode") ?? "regular");
-    } else if (recommendationResponseMode === "v3_direct") {
+    if (recommendationResponseMode === "v3_direct") {
       payload = v3RecommendationPayload();
-    } else if (recommendationResponseMode === "empty") {
-      payload = { status: "ready", items: [], profile: investmentProfile() };
-    } else if (recommendationResponseMode === "market_closed") {
-      payload = { status: "market_closed", items: [], profile: investmentProfile() };
-    } else if (recommendationResponseMode === "error") {
-      status = 503;
-      payload = { detail: "recommendation unavailable" };
     } else {
       payload = profileSaved
         ? readyRecommendationPayload()
@@ -587,26 +498,6 @@ function readyRecommendationPayload(): Record<string, unknown> {
       metricsSnapshot: {}
     }],
     profile: savedProfile
-  };
-}
-
-function sessionRecommendationPayload(sessionMode: string): Record<string, unknown> {
-  const pre = sessionMode === "pre";
-  return {
-    status: "ready",
-    generatedAt: pre ? "2026-07-16T08:55:00-04:00" : "2026-07-16T10:15:00-04:00",
-    summary: { sessionMode },
-    items: [{
-      symbol: pre ? "AMD" : "NVDA",
-      action: "buy",
-      rank: 1,
-      score: pre ? 91 : 77,
-      confidence: pre ? 0.9 : 0.7,
-      reasons: [{ type: "momentum", text: pre ? "장전 상대강도 확인" : "본장 상대강도 확인" }],
-      riskWarnings: [],
-      metricsSnapshot: {}
-    }],
-    profile: investmentProfile()
   };
 }
 

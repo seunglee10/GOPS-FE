@@ -1,5 +1,5 @@
-import { Activity, Filter, Flame, LoaderCircle, RefreshCcw, RotateCcw, Search, Sparkles, SlidersHorizontal, TrendingUp } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Activity, Filter, Flame, LoaderCircle, RefreshCcw, RotateCcw, Search, Settings, Sparkles, SlidersHorizontal, TrendingUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { agentReferenceKey, stockRecommendationReference, type AgentReference } from "../agent/agentReferences";
 import { LogoDevAttribution, StockLogo } from "../components/StockLogo";
 import { formatKoreanCompactUsd } from "../currencyFormat";
@@ -13,6 +13,7 @@ import {
   type StockRecommendationItem,
   type StockRecommendationPayload
 } from "./recommendationApi";
+import { RecommendationSettingsDialog } from "./RecommendationSettingsDialog";
 import { isSimulationDemoScoreProfile, recommendationBlockLabels, ScoreProfileManager } from "./ScoreProfileManager";
 import type { StockRecommendationSelection } from "./StockRecommendationsPanel";
 
@@ -118,6 +119,8 @@ export function StockDiscoveryPanel({
   const [sectors, setSectors] = useState<Set<string>>(new Set());
   const [metricRanges, setMetricRanges] = useState<Record<ScreenerMetricKey, NumericRange>>(emptyMetricRanges);
   const [visibleCount, setVisibleCount] = useState(DISCOVERY_PAGE_SIZE);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -216,6 +219,16 @@ export function StockDiscoveryPanel({
               <Search size={14} aria-hidden="true" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="티커·기업·산업·섹터 검색" />
             </label>
+            <button
+              ref={settingsButtonRef}
+              type="button"
+              className="panel-icon-button"
+              aria-label="추천 설정"
+              title="추천 설정"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings size={14} />
+            </button>
             <button type="button" className="panel-icon-button" title="추천 갱신" disabled={loading || refreshing} onClick={() => void refresh()}>
               {refreshing ? <LoaderCircle size={14} className="spin" /> : <RefreshCcw size={14} />}
             </button>
@@ -358,6 +371,17 @@ export function StockDiscoveryPanel({
             />
           </div>
         </section>
+      )}
+
+      {settingsOpen && (
+        <RecommendationSettingsDialog
+          returnFocusRef={settingsButtonRef}
+          onClose={() => setSettingsOpen(false)}
+          onSaved={() => {
+            setSettingsOpen(false);
+            void refresh();
+          }}
+        />
       )}
     </section>
   );
