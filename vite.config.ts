@@ -127,6 +127,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 5173,
+      // Google OAuth matches the redirect URI exactly, port included. Silently falling
+      // back to 5174 when 5173 is taken would break the login callback, so fail instead.
+      strictPort: true,
       allowedHosts: ["stargops.com", "www.stargops.com"],
       proxy: {
         "/api": backendTarget,
