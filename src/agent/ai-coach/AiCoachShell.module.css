@@ -6,8 +6,8 @@
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  color: #f4f5f7;
-  background: #202123;
+  color: var(--color-text);
+  background: var(--app-panel-glass-background);
   font: var(--type-label-md);
   letter-spacing: var(--type-label-md-letter-spacing);
   text-transform: var(--type-label-md-text-transform);
@@ -17,8 +17,8 @@
   display: flex;
   align-items: center;
   padding: 11px 16px;
-  border-bottom: 1px solid #ffffff1c;
-  background: #18191b;
+  border-bottom: 1px solid var(--coinbase-hairline-strong);
+  background: var(--coinbase-header);
 }
 
 .shell > header strong {
@@ -45,8 +45,8 @@
   justify-content: center;
   gap: 14px;
   padding: 9px;
-  border-top: 1px solid #ffffff1c;
-  background: #18191b;
+  border-top: 1px solid var(--coinbase-hairline-strong);
+  background: var(--coinbase-header);
 }
 
 .shell > footer > div {
@@ -58,7 +58,7 @@
   display: grid;
   place-items: center;
   border: 0;
-  color: #a8adb5;
+  color: var(--color-muted);
   background: transparent;
 }
 
@@ -71,13 +71,13 @@
   height: 7px;
   padding: 0;
   border-radius: 50%;
-  background: #555b64;
+  background: var(--color-muted-soft);
 }
 
 .shell > footer > div .active {
   width: 20px;
   border-radius: 6px;
-  background: #62aef7;
+  background: var(--color-signal);
 }
 
 .placeholder {
@@ -85,7 +85,7 @@
   min-height: 300px;
   place-content: center;
   justify-items: center;
-  color: #9ca3ad;
+  color: var(--color-muted);
   text-align: center;
 }
 
@@ -95,7 +95,7 @@
 
 .placeholder h2 {
   margin: 8px 0;
-  color: #fff;
+  color: var(--color-text);
   font: var(--type-title-sm);
   letter-spacing: var(--type-title-sm-letter-spacing);
   text-transform: var(--type-title-sm-text-transform);
@@ -119,11 +119,9 @@
   text-transform: var(--type-caption-text-transform);
 }
 
-.shell[data-page="2"] > main,
-.shell[data-page="4"] > main {
-  background: var(--app-panel-glass-background);
-}
-
+/* 2·4 페이지만 토큰을 쓰고 나머지 페이지는 색을 하드코딩하던 분기가 있었다.
+   베이스를 토큰화하면서 색 오버라이드는 전부 중복이 되어 지웠다 — 남은 건
+   2페이지 전용 레이아웃뿐이다. */
 .shell[data-page="2"] > main {
   overflow: hidden;
 }
@@ -131,19 +129,6 @@
 .shell[data-page="2"] .pageContent {
   height: 100%;
   box-sizing: border-box;
-}
-
-.shell[data-page="2"] > header,
-.shell[data-page="4"] > header,
-.shell[data-page="2"] > footer,
-.shell[data-page="4"] > footer {
-  border-color: var(--coinbase-hairline-strong);
-  background: #1b1b1b;
-}
-
-.shell[data-page="2"] > footer > div .active,
-.shell[data-page="4"] > footer > div .active {
-  background: var(--color-signal);
 }
 
 @media (prefers-reduced-motion: reduce) {

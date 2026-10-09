@@ -1,5 +1,6 @@
 import type { CompanyEarningsSeriesPoint, CompanyFinancialSeriesPoint, Sp500UniverseItem } from "./sp500Universe.seed";
 import { normalizeSector, sectorLabelKo } from "./sectors";
+import { asString } from "../shared/json";
 
 export type MarketHeatmapPayload = {
   source: string;
@@ -222,10 +223,6 @@ function normalizeEarningsSeries(value: unknown) {
 
 function asRecord(value: unknown): RawHeatmapRecord {
   return value && typeof value === "object" ? value as RawHeatmapRecord : {};
-}
-
-function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function asNumber(value: unknown): number | undefined {

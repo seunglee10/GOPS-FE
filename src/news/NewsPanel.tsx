@@ -11,6 +11,7 @@ import { GlossaryText } from "../glossary/GlossaryText";
 import { NewsFlipCard, type NewsFlipCardItem } from "./NewsFlipCard";
 import { ContextualAgentAskButton } from "../agent/ContextualAgentAskButton";
 import { latestSimulatorStatus, simulatorStatusEvent, type SimulatorStatus } from "../simulator/simulatorApi";
+import { readArray, readObject } from "../shared/json";
 
 type NewsItem = {
   symbol: string;
@@ -631,14 +632,6 @@ function sourceIconUrl(value: string) {
 
 function hideBrokenImage(event: SyntheticEvent<HTMLImageElement>) {
   event.currentTarget.style.display = "none";
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {

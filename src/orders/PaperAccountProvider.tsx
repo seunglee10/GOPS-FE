@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useAuth } from "../auth/AuthProvider";
+import { accountKeyOf, useAuth } from "../auth/AuthProvider";
 import {
   fetchPaperAccount,
   fetchPaperOrders,
@@ -35,7 +35,7 @@ const PaperAccountContext = createContext<PaperAccountContextValue | undefined>(
 
 export function PaperAccountProvider({ children }: { children: ReactNode }) {
   const { authEnabled, user, loading: authLoading } = useAuth();
-  const accountKey = authEnabled ? (user?.email.trim().toLowerCase() ?? "") : "auth-disabled";
+  const accountKey = authEnabled ? accountKeyOf(user) : "auth-disabled";
   const canLoad = !authLoading && (!authEnabled || Boolean(user));
   const requestRevisionRef = useRef(0);
   const orderRequestRevisionRef = useRef(0);

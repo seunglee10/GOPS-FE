@@ -4,6 +4,7 @@ import type {
   FinalAnswerSection
 } from "../agent/agentAnalysis";
 import type { TiledPanelState } from "./panelLayout";
+import { readArray } from "../shared/json";
 
 export const wildPanelBasePageId = "base";
 export const wildPanelReportLimit = 10;
@@ -356,10 +357,6 @@ function readRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
     : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {

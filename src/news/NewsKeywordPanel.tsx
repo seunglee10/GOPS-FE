@@ -13,6 +13,7 @@ import {
   type SimulatorStatus
 } from "../simulator/simulatorApi";
 import { ContextualAgentAskButton } from "../agent/ContextualAgentAskButton";
+import { readArray, readObject } from "../shared/json";
 
 export type NewsKeywordDirection = "positive" | "negative" | "neutral";
 export type NewsKeywordImpactDirection = NewsKeywordDirection | "mixed";
@@ -528,16 +529,6 @@ function sourceHost(value: string) {
   } catch {
     return "source";
   }
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null;
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function readString(value: unknown): string | null {

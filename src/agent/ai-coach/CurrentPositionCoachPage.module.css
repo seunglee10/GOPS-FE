@@ -33,7 +33,7 @@
 .carouselStage { position: relative; min-width: 0; }
 .tradeArrow,
 .chartArrow,
-.carouselArrow { position: absolute; top: 50%; z-index: 4; display: grid; width: 28px; height: 40px; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 999px; color: var(--text); background: #272727; transform: translateY(-50%); }
+.carouselArrow { position: absolute; top: 50%; z-index: 4; display: grid; width: 28px; height: 40px; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 999px; color: var(--text); background: var(--surface); transform: translateY(-50%); }
 .tradeArrow:first-child,
 .chartArrow:first-child,
 .carouselArrow:first-child { left: 6px; }
@@ -72,16 +72,16 @@
 .sectionTitle { margin-bottom: 12px; }
 .chartHost { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
 .chartHost svg { display: block; width: 100%; min-height: 0; }
-.gridLine { stroke: rgb(255 255 255 / .08); }
+.gridLine { stroke: rgb(var(--coinbase-ink-rgb) / .08); }
 .axis,
 .panelLabel,
 .entryText { fill: var(--muted); font: var(--type-caption); letter-spacing: var(--type-caption-letter-spacing); text-transform: var(--type-caption-text-transform); }
 .entryLine,
 .threshold,
 .markerGuide { stroke-dasharray: 5 5; }
-.entryLine { stroke: rgb(255 255 255 / .32); }
+.entryLine { stroke: rgb(var(--coinbase-ink-rgb) / .32); }
 .threshold { stroke: color-mix(in srgb, var(--red) 45%, transparent); }
-.zeroLine { stroke: rgb(255 255 255 / .16); }
+.zeroLine { stroke: rgb(var(--coinbase-ink-rgb) / .16); }
 .upCandle line,
 .upCandle rect { fill: var(--green); stroke: var(--green); }
 .downCandle line,
@@ -97,7 +97,7 @@
 .volumeBar { fill: color-mix(in srgb, var(--blue) 45%, transparent); }
 .markerGuide { stroke: var(--red); }
 .markerDot { fill: var(--red); stroke: var(--text); stroke-width: 1.5; }
-.tooltip { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; max-width: 310px; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: #272727; }
+.tooltip { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; max-width: 310px; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
 .tooltip strong { font: var(--type-label-md); letter-spacing: var(--type-label-md-letter-spacing); text-transform: var(--type-label-md-text-transform); }
 .tooltip span { color: var(--muted); font: var(--type-caption); letter-spacing: var(--type-caption-letter-spacing); text-transform: var(--type-caption-text-transform); }
 .tooltip p { margin: 0; font: var(--type-label-md); letter-spacing: var(--type-label-md-letter-spacing); text-transform: var(--type-label-md-text-transform); }

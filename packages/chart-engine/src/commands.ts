@@ -2,7 +2,7 @@ import { cloneChartDocument, restoreChartDocumentSnapshot, snapshotChartDocument
 import { defaultVisibleBarsForInterval, maxRequestBarsForInterval, normalizeChartInterval } from "./intervals";
 import { chartLayerMetadata, layerVisibilityAliases, normalizeChartLayerKey } from "./layers";
 import { drawingRegistry, isSupportedDrawing } from "./registries";
-import { riskRewardDirection } from "./drawingGeometry";
+import { normalizeParallelLineCount, riskRewardDirection } from "./drawingGeometry";
 import { normalizeSupportedSymbol } from "./symbols";
 import { clampRightOffset, latestCandleRightOffset } from "./viewport";
 import type {
@@ -23,6 +23,7 @@ import type {
   DrawingStyle,
   DrawingType
 } from "./types";
+import { readObject } from "./json";
 
 export type ChartCommandResult =
   | { ok: true; document: ChartDocument; message: string; historyEntry?: ChartHistoryEntry; noOp?: boolean }
@@ -645,10 +646,6 @@ function readString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-
 function readAnchor(value: unknown): DrawingAnchor | null {
   const source = readObject(value);
   if (!source) {
@@ -866,10 +863,6 @@ function normalizeDrawingAnchors(type: DrawingType, anchors: DrawingAnchor[]): D
     symbol: stop.symbol,
     paneId: stop.paneId
   }, ...rest];
-}
-
-function normalizeParallelLineCount(value: number): number {
-  return Math.max(2, Math.min(10, Math.round(value)));
 }
 
 function readComparison(value: unknown): ComparisonSeries | null {

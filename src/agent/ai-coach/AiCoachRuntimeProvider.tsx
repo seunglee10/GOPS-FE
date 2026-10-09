@@ -10,7 +10,7 @@ import {
   type ReactNode
 } from "react";
 import { fetchLatestCoachReport } from "../agentAnalysis";
-import { useAuth } from "../../auth/AuthProvider";
+import { accountKeyOf, useAuth } from "../../auth/AuthProvider";
 import { usePaperAccount } from "../../orders/PaperAccountProvider";
 import type { CoachReport } from "./types";
 import {
@@ -41,7 +41,7 @@ export function AiCoachRuntimeProvider({ children }: { children: ReactNode }) {
     orders: paperOrders,
     ordersLoading
   } = usePaperAccount();
-  const accountKey = authEnabled ? (user?.email.trim().toLowerCase() ?? "") : "auth-disabled";
+  const accountKey = authEnabled ? accountKeyOf(user) : "auth-disabled";
   const [state, dispatch] = useReducer(aiCoachRuntimeReducer, accountKey, createAiCoachRuntimeState);
   const [activePanelCount, setActivePanelCount] = useState(0);
   const seededStatusRef = useRef<SeededPortfolioStatus>("unknown");

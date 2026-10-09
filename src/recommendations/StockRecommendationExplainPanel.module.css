@@ -316,7 +316,7 @@
   border: 1px solid var(--report-rule);
   border-radius: 6px;
   padding: 11px 12px;
-  background: #1b1b1b;
+  background: var(--coinbase-header);
   box-shadow: none;
   color: var(--report-ink);
   pointer-events: none;

@@ -1,3 +1,5 @@
+import { asString, readArray } from "../shared/json";
+
 export type MarketIndexItem = {
   symbol: string;
   name: string;
@@ -107,14 +109,6 @@ function normalizeCacheStatus(value: unknown): MarketIndicesPayload["cacheStatus
 
 function asRecord(value: unknown): RawRecord {
   return value && typeof value === "object" && !Array.isArray(value) ? value as RawRecord : {};
-}
-
-function readArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function asNumber(value: unknown): number | undefined {

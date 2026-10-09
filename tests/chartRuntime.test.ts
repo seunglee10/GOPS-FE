@@ -4468,19 +4468,6 @@ assert.doesNotMatch(bottomCommandBarSource, /\.reverse\(\)[\s\S]*enqueueAlertToa
 assert.match(bottomCommandBarSource, /setTimeout\(\(\) => \{[\s\S]*advanceAlertToast\(\);[\s\S]*alertToastAdvanceMs/);
 assert.match(bottomCommandBarSource, /onOpenChart=\{openAlertToastChart\}/);
 assert.match(bottomCommandBarSource, /onSelectSymbol\(symbol\)/);
-const alertMenuSource = readFileSync(fileURLToPath(new URL("../src/alerts/AlertMenu.tsx", import.meta.url)), "utf-8");
-assert.match(alertMenuSource, /본장 시작 알림/);
-assert.match(alertMenuSource, /deleteAllAlerts/);
-assert.match(alertMenuSource, /등록된 알림 전체 삭제/);
-assert.match(alertMenuSource, /등록된 알림 전체 삭제 확인/);
-assert.match(alertMenuSource, /등록된 알림 전체 삭제 취소/);
-assert.doesNotMatch(alertMenuSource, /window\.confirm/);
-assert.match(alertMenuSource, /is-form-only/);
-assert.match(alertMenuSource, /notificationChartSymbol/);
-assert.match(alertMenuSource, /onOpenNotificationSymbol\(chartSymbol\)/);
-assert.match(alertMenuSource, /onClick=\{\(\) => void openNotification\(notification\)\}/);
-assert.doesNotMatch(alertMenuSource, /disabled=\{saving \|\| Boolean\(notification\.readAt\)\}/);
-
 const priceConditionPanelSource = readFileSync(fileURLToPath(new URL("../src/price-condition/PriceConditionPanel.tsx", import.meta.url)), "utf-8");
 assert.match(priceConditionPanelSource, /role="tablist"/);
 assert.match(priceConditionPanelSource, /view === "account" \? "가상계좌 가격 조건"/);

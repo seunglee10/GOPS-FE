@@ -1,5 +1,6 @@
 import { normalizeChartProposal } from "./proposals";
 import type { ChartProposal } from "./types";
+import { readObject } from "./json";
 
 export type AgentChatMessage = {
   id: string;
@@ -48,10 +49,6 @@ export function normalizeAgentChatResponse(
   }, target);
 
   return { reply, proposal };
-}
-
-function readObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
 function readString(value: unknown): string | null {

@@ -1,3 +1,5 @@
+import { asString } from "../shared/json";
+
 export type AlertKind = "price_cross" | "spike" | "volume_absolute" | "volume_relative" | "rsi_threshold";
 export type AlertConditionKind = "price_cross" | "price_change" | "volume_absolute" | "volume_relative" | "rsi_threshold";
 export type AlertDirection = "above" | "below";
@@ -326,10 +328,6 @@ function normalizeStatus(value: unknown): AlertStatus {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? value as Record<string, unknown> : {};
-}
-
-function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function asNumber(value: unknown): number | undefined {

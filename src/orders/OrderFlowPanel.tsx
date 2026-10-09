@@ -26,6 +26,7 @@ import {
 } from "../chart/orderFlow";
 import { drawOrderFlowPanelLadder } from "../chart/orderFlowRender";
 import { readThemeColors } from "../theme/colors";
+import { subscribeThemeChange } from "../theme/themeMode";
 import type { ThemeColors } from "../theme/colors";
 import { applyCanvasTypography, CANVAS_FONT_FAMILY } from "../theme/typography";
 import { SymbolSearch } from "../components/SymbolSearch";
@@ -443,10 +444,13 @@ export function OrderFlowPanel({
     };
     const resizeObserver = new ResizeObserver(updateSize);
     resizeObserver.observe(canvas);
+    // draw가 CSS 변수를 매번 다시 읽으므로, 테마 전환에는 리드로우만 걸면 된다.
+    const unsubscribeTheme = subscribeThemeChange(schedule);
     updateSize();
     schedule();
     return () => {
       resizeObserver.disconnect();
+      unsubscribeTheme();
       scheduleDrawRef.current = null;
       if (animationFrame !== null) {
         window.cancelAnimationFrame(animationFrame);
