@@ -1,5 +1,5 @@
 /* 용어 카드 그림. 목업 gops.js의 gauge/pastLine/candleFig/지지·저항 20일 캔들/miniSpark/monthLine 을 문자열을 돌려주는 순수 함수로 */
-import { fx1, md, rng } from "./format";
+import { esc, fx1, md, rng } from "./format";
 import type { Bar } from "./types";
 
 /** 용어 카드 그림의 기준 폭 */
@@ -12,10 +12,10 @@ export function gauge(v: number, max: number, zones: GaugeZone[], ticks: number[
   const X = (p: number) => 6 + Math.min(Math.max(p, 0), max) / max * (CW - 12);
   return `<svg viewBox="0 0 ${CW} 58" class="mini">
     <rect x="6" y="22" width="${CW - 12}" height="8" rx="4" fill="var(--control)"/>
-    ${zones.map(([a, b, c]) => `<rect x="${X(a)}" y="22" width="${X(b) - X(a)}" height="8" fill="${c}" opacity=".28"/>`).join("")}
-    ${zones.map(([a, b, , t]) => t ? `<text x="${(X(a) + X(b)) / 2}" y="46" font-size="11" fill="var(--ink-muted)" text-anchor="middle">${t}</text>` : "").join("")}
+    ${zones.map(([a, b, c]) => `<rect x="${X(a)}" y="22" width="${X(b) - X(a)}" height="8" fill="${esc(c)}" opacity=".28"/>`).join("")}
+    ${zones.map(([a, b, , t]) => t ? `<text x="${(X(a) + X(b)) / 2}" y="46" font-size="11" fill="var(--ink-muted)" text-anchor="middle">${esc(t)}</text>` : "").join("")}
     ${ticks.map(t => `<line x1="${X(t)}" x2="${X(t)}" y1="20" y2="32" stroke="var(--ink-muted)"/><text x="${X(t)}" y="57" font-size="10.5" fill="var(--muted-soft)" text-anchor="middle">${t}</text>`).join("")}
-    <path d="M${X(v) - 6} 8 h12 l-6 9 z" fill="var(--ink)"/><text x="${X(v)}" y="6" font-size="11.5" font-weight="700" fill="var(--ink)" text-anchor="middle">${fmt(v)}</text>
+    <path d="M${X(v) - 6} 8 h12 l-6 9 z" fill="var(--ink)"/><text x="${X(v)}" y="6" font-size="11.5" font-weight="700" fill="var(--ink)" text-anchor="middle">${esc(fmt(v))}</text>
   </svg>`;
 }
 
@@ -25,7 +25,7 @@ export function pastLine(C: Pick<Bar, "t" | "c">[], marks: [number, string][]) {
   const X = (i: number) => 4 + i / (C.length - 1) * (CW - 8), Y = (p: number) => 6 + (hi - p) / (hi - lo || 1) * (H - 22);
   return `<svg viewBox="0 0 ${CW} ${H}" class="mini">
     <polyline points="${C.map((d, i) => `${X(i)},${Y(d.c)}`).join(" ")}" fill="none" stroke="var(--muted-soft)" stroke-width="1.5"/>
-    ${marks.map(([i, col]) => `<circle cx="${X(i)}" cy="${Y(C[i].c)}" r="3.2" fill="${col}"/>`).join("")}
+    ${marks.map(([i, col]) => `<circle cx="${X(i)}" cy="${Y(C[i].c)}" r="3.2" fill="${esc(col)}"/>`).join("")}
     <text x="4" y="${H - 2}" font-size="10.5" fill="var(--muted-soft)">${md(C[0].t)}</text><text x="${CW - 4}" y="${H - 2}" font-size="10.5" fill="var(--muted-soft)" text-anchor="end">${md(C[C.length - 1].t)}</text>
   </svg>`;
 }
@@ -35,7 +35,7 @@ export function candleFig(x: number, o: number, h: number, l: number, c: number,
   const up = c >= o, col = up ? "var(--up)" : "var(--down)", top = Y(Math.max(o, c)), bot = Y(Math.min(o, c));
   const at = [Y(h), top, bot, Y(l)], ty = at.reduce<number[]>((a, v, i) => a.concat(i ? Math.max(v, a[i - 1] + 15) : v), []);
   const txt = [labels[0], up ? labels[2] : labels[1], up ? labels[1] : labels[2], labels[3]];
-  const tag = (i: number) => `<polyline points="${x + side * 14},${at[i]} ${x + side * 24},${at[i]} ${x + side * 30},${ty[i]}" fill="none" stroke="var(--muted-soft)"/><text x="${x + side * 34}" y="${ty[i] + 4}" font-size="11.5" fill="var(--ink)" text-anchor="${side > 0 ? "start" : "end"}">${txt[i]}</text>`;
+  const tag = (i: number) => `<polyline points="${x + side * 14},${at[i]} ${x + side * 24},${at[i]} ${x + side * 30},${ty[i]}" fill="none" stroke="var(--muted-soft)"/><text x="${x + side * 34}" y="${ty[i] + 4}" font-size="11.5" fill="var(--ink)" text-anchor="${side > 0 ? "start" : "end"}">${esc(txt[i])}</text>`;
   return `<line x1="${x}" x2="${x}" y1="${Y(h)}" y2="${Y(l)}" stroke="${col}" stroke-width="2"/><rect x="${x - 11}" y="${top}" width="22" height="${Math.max(2, bot - top)}" fill="${col}" rx="1.5"/>
     ${[0, 1, 2, 3].map(tag).join("")}`;
 }

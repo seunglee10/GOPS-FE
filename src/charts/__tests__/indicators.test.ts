@@ -87,3 +87,12 @@ test("squarify: 넓이 비례로 네모를 채운다", () => {
   assert.equal(area(cells.find(c => c.n === "a")!), 300);
   assert.equal(area(cells.find(c => c.n === "b")!), 100);
 });
+
+test("renderCourseChart: 서버에서 올 차트 이름·날짜는 이스케이프된다", async () => {
+  const { renderCourseChart, EMPTY_COURSE_STATE } = await import("../courseChart");
+  const rows: CourseRow[] = Array.from({ length: 6 }, (_, i) => [`2020-01-0${i + 1}`, 10, 12, 9, 11, 100]);
+  const svg = renderCourseChart({ q: { id: "x", kind: "tap", fig: { mark: "2020-01-03" }, ans: [1] }, chart: { sym: "X", name: "<script>alert(1)</script>", iv: "일봉\"", rows }, state: EMPTY_COURSE_STATE });
+  assert.ok(!svg.includes("<script>"));
+  assert.ok(svg.includes("&lt;script&gt;alert(1)&lt;/script&gt;"));
+  assert.ok(svg.includes("일봉&quot;"));
+});

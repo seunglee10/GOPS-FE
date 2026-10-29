@@ -424,7 +424,7 @@ class MainChart {
     const vp = G.panes.find(p => p.k === "vol");
     const zones = tz("candle", T, mainB - T) + (vp ? tz("vol", vp.top, vp.bot - vp.top) : "") + (S.levels && LV ? [LV.sup, LV.res].filter(p => y(p) > T && y(p) < mainB).map(p => tz("sup", y(p) - 10, 20)).join("") : "");
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", `${s} ${CX_IV[S.iv][0]} ${(CX_TYPES.find(t => t[0] === type) ?? CX_TYPES[0])[1]} 차트`);
+    svg.setAttribute("aria-label", `${esc(s)} ${CX_IV[S.iv][0]} ${(CX_TYPES.find(t => t[0] === type) ?? CX_TYPES[0])[1]} 차트`);
     svg.innerHTML = `<defs><clipPath id="cx-clip"><rect x="${L}" y="0" width="${W - L}" height="${mainB}"/></clipPath><clipPath id="cx-clip-p"><rect x="${L}" y="${mainB}" width="${W - L}" height="${H - mainB}"/></clipPath></defs>${zones}${g}
     <line x1="${W - R}" x2="${W - R}" y1="${T - 30}" y2="${H - XA}" stroke="var(--chart-sep)"/><line x1="${L}" x2="${W - R}" y1="${H - XA}" y2="${H - XA}" stroke="var(--chart-sep)"/>
     <g clip-path="url(#cx-clip)">${agent}${ser}${ma}${hl2}${refSvg}${dr}</g><g clip-path="url(#cx-clip-p)">${pn}</g>${levels}${evs}${now}${drV}<g class="cx-cross"></g>`;
@@ -501,8 +501,8 @@ class MainChart {
         hit = `<rect x="${x0}" y="${y0}" width="${Math.max(w, 6)}" height="${Math.max(h, 6)}" fill="transparent"/>`;
       }
       const hs: [string, number, number][] = d.k === "hline" || d.k === "vline" ? [["a", ax, ay]] : [["a", ax, ay], ["b", bx, by]];
-      const handles = on && d !== this.draft ? hs.map(([w, hx, hy]) => `<circle data-dh="${w}" data-di="${d.id}" cx="${d.k === "hline" ? G.L + G.plotW / 2 : hx}" cy="${d.k === "vline" ? (G.T + bot) / 2 : hy}" r="5" fill="var(--canvas)" stroke="${c}" stroke-width="1.6" style="cursor:move"/>`).join("") : "";
-      return `<g class="cx-d${on ? " on" : ""}" data-di="${d.id}" style="cursor:${d === this.draft ? "crosshair" : "pointer"}">${shape}${hit}${handles}</g>`;
+      const handles = on && d !== this.draft ? hs.map(([w, hx, hy]) => `<circle data-dh="${w}" data-di="${esc(d.id)}" cx="${d.k === "hline" ? G.L + G.plotW / 2 : hx}" cy="${d.k === "vline" ? (G.T + bot) / 2 : hy}" r="5" fill="var(--canvas)" stroke="${c}" stroke-width="1.6" style="cursor:move"/>`).join("") : "";
+      return `<g class="cx-d${on ? " on" : ""}" data-di="${esc(d.id)}" style="cursor:${d === this.draft ? "crosshair" : "pointer"}">${shape}${hit}${handles}</g>`;
     }).join("");
   }
   /* 마우스를 올린 막대의 시가·고가·저가·종가, 이동평균, 아래 지표 값과 십자선 */

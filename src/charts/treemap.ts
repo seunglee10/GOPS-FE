@@ -95,7 +95,7 @@ export function renderTreemap(o: TreemapRenderOptions) {
       /* 넓은 칸: 로고+티커+등락률, 중간 칸: 로고+등락률, 좁은 칸: 로고만. 티커는 마우스를 올리면 나오는 정보에 있다 */
       const fit = c.w >= 64 && c.h >= 76 ? "full" : c.h >= 56 ? "mid" : "min";
       const url = o.logoUrl(c.s), bg = url && o.logoBg ? o.logoBg(c.s) : null;
-      const logo = url ? `<i class="tlogo img"${bg ? ` style="background:${bg}"` : ""}><img src="${esc(url)}" alt="" loading="lazy"></i>` : `<i class="tlogo" style="background:${markColor(c.s)}">${esc(c.s[0])}</i>`;
+      const logo = url ? `<i class="tlogo img"${bg ? ` style="background:${esc(bg)}"` : ""}><img src="${esc(url)}" alt="" loading="lazy"></i>` : `<i class="tlogo" style="background:${esc(markColor(c.s))}">${esc(c.s[0])}</i>`;
       html += `<a class="cell ${size} fit-${fit}" href="${esc(href(c.s))}" aria-label="${esc(c.s)} ${pct(c.d)}" data-sym="${esc(c.s)}" data-d="${c.d}" data-v="${c.v}" style="left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;background:${heat(c.d, max, o.dark)}">${logo}${fit === "full" ? `<b>${esc(c.s)}</b>` : ""}${fit !== "min" ? `<span>${pct(c.d)}</span>` : ""}</a>`;
     });
     html += `</div>`;

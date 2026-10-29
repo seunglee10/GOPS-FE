@@ -1,4 +1,5 @@
 /* 코스 문제 차트. 목업 gops.js의 qChart/qFigure 를 문제·답 상태·차트 줄을 매개변수로 받는 순수 함수로 */
+import { esc } from "./format";
 import { rsiRows } from "./indicators";
 import { candleFig } from "./termFigures";
 import type { CourseRow } from "./types";
@@ -78,7 +79,7 @@ export function renderCourseChart(o: CourseChartOptions) {
   const ticks = nv <= 20 && !QCOMPACT ? V.map((_, k) => va + k).filter(i => (i - va) % 3 === 0) : QCOMPACT ? [va, Math.round(va + nv / 2), vb] : [va, Math.round(va + nv / 3), Math.round(va + 2 * nv / 3), vb];
   ticks.forEach(i => { const [, m, d] = R[i][0].split("-"); g += `<text x="${x(i)}" y="${H - 6}" font-size="11.5" fill="var(--chart-axis)" text-anchor="${i === va ? "start" : i === vb ? "end" : "middle"}">${+m}/${+d}</text>`; });
   const mi = f.mark ? R.findIndex(r => r[0] === f.mark) : -1;
-  if (mi >= 0 && inV(mi) && f.mark) g += `<rect x="${x(mi) - step / 2}" y="${T - 18}" width="${step}" height="${H - T - 6}" fill="var(--brand)" opacity=".1"/><text x="${x(mi)}" y="${T - 6}" font-size="11.5" font-weight="700" fill="var(--brand)" text-anchor="middle">${krDate(f.mark).slice(6)}</text>`;
+  if (mi >= 0 && inV(mi) && f.mark) g += `<rect x="${x(mi) - step / 2}" y="${T - 18}" width="${step}" height="${H - T - 6}" fill="var(--brand)" opacity=".1"/><text x="${x(mi)}" y="${T - 6}" font-size="11.5" font-weight="700" fill="var(--brand)" text-anchor="middle">${esc(krDate(f.mark).slice(6))}</text>`;
   // 고른 날·정답 날 표시
   const ans = tapAnswers(q), tol = q.tol || 0, near = (i: number, set: number[]) => set.some(a => Math.abs(a - i) <= tol);
   CQS.sel.filter(inV).forEach(i => { const ok = near(i, ans); g += `<rect x="${x(i) - step / 2 + 1}" y="${T - 4}" width="${step - 2}" height="${PH + 8}" rx="3" fill="${done ? (ok ? "var(--ok)" : "var(--danger)") : "var(--brand)"}" opacity=".16"/>`; });
@@ -123,8 +124,8 @@ export function renderCourseChart(o: CourseChartOptions) {
     if (h2 && q.id === "r2" && ans.length) { const a = ans[0], x0 = x(a - 6) - step / 2, x1 = x(a + 5) + step / 2; sub += `<line x1="${L}" x2="${QW - Rt}" y1="${ry(30)}" y2="${ry(30)}" stroke="var(--brand)" stroke-width="2"/><rect x="${x0}" y="${top}" width="${x1 - x0}" height="${RH}" fill="var(--brand)" opacity=".12" rx="3"/>`; }
   }
   // 날을 고르는 문제: 캔들마다 세로 전체를 누를 수 있게
-  const hits = q.kind === "tap" && !done ? V.map((r, k) => { const i = va + k; return `<rect x="${x(i) - step / 2}" y="${T - 4}" width="${step}" height="${H - T - 20}" fill="transparent" style="cursor:pointer" data-act="cq-tap" data-i="${i}"><title>${krDate(r[0])}</title></rect>`; }).join("") : "";
-  return `<svg viewBox="0 0 ${QW} ${H}" class="qchart" role="img" aria-label="${o.chart.name} ${o.chart.iv} 차트">${g}${extra}${cs}${sub}${hits}</svg>`;
+  const hits = q.kind === "tap" && !done ? V.map((r, k) => { const i = va + k; return `<rect x="${x(i) - step / 2}" y="${T - 4}" width="${step}" height="${H - T - 20}" fill="transparent" style="cursor:pointer" data-act="cq-tap" data-i="${i}"><title>${esc(krDate(r[0]))}</title></rect>`; }).join("") : "";
+  return `<svg viewBox="0 0 ${QW} ${H}" class="qchart" role="img" aria-label="${esc(o.chart.name)} ${esc(o.chart.iv)} 차트">${g}${extra}${cs}${sub}${hits}</svg>`;
 }
 
 export type CourseFigureOptions = Omit<CourseChartOptions, "chart"> & { chart?: CourseChartData };
@@ -142,7 +143,7 @@ export function renderCourseFigure(o: CourseFigureOptions) {
     return `<svg viewBox="0 0 ${QW} 220" class="qchart">${W.map((r, k) => `<rect x="${10 + k * bw + bw * .15}" y="${Y(r[5])}" width="${bw * .7}" height="${196 - Y(r[5])}" rx="2" fill="${k === 20 ? "var(--brand)" : "var(--muted-soft)"}" opacity="${k === 20 ? 1 : .55}"/>`).join("")}
       <line x1="10" x2="${QW - 10 - bw}" y1="${Y(av)}" y2="${Y(av)}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/><text class="halo" x="14" y="${Y(av) - 6}" font-size="12" fill="var(--ink)">20일 평균</text>
       ${o.state.hint >= 2 && !done ? (() => { const u = 196 - Y(av), bx = 10 + 20 * bw + bw * .15, k = Math.floor(W[20][5] / av); return Array.from({ length: k }, (_, j) => `<rect x="${bx}" y="${196 - (j + 1) * u}" width="${bw * .7}" height="${u}" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="4 3"/>`).join(""); })() : ""}
-      <text x="10" y="214" font-size="11.5" fill="var(--chart-axis)">${R[i - 20][0].slice(5).replace("-", "/")}</text><text x="${QW - 10}" y="214" font-size="11.5" font-weight="700" fill="var(--brand)" text-anchor="end">5/25</text></svg>`;
+      <text x="10" y="214" font-size="11.5" fill="var(--chart-axis)">${esc(R[i - 20][0].slice(5).replace("-", "/"))}</text><text x="${QW - 10}" y="214" font-size="11.5" font-weight="700" fill="var(--brand)" text-anchor="end">5/25</text></svg>`;
   }
   if (f.type === "rsibars" && o.chart) {
     const R = o.chart.rows, D = R.slice(1).map((r, k) => r[4] - R[k][4]), mx = Math.max(...D.map(Math.abs)), bw = (QW - 20) / 14, P = rsiRows(R);
