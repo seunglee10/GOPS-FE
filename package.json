@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test:chart": "node scripts/run-chart-tests.mjs",
+    "test:charts": "node scripts/run-charts-tests.mjs",
     "test:simulator": "node scripts/run-simulator-tests.mjs",
     "test:layout": "node scripts/run-layout-tests.mjs",
     "test:ai-coach": "node scripts/run-ai-coach-contract-tests.mjs",
