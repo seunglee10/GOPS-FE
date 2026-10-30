@@ -24,5 +24,6 @@
     }
   },
   "include": ["src", "packages/chart-engine/src"],
+  "exclude": ["src/**/__tests__"],
   "references": []
 }
