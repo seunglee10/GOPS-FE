@@ -15,6 +15,7 @@ import SignupPage from "../pages/Signup";
 import VerifyPage from "../pages/Verify";
 import GooglePage from "../pages/Google";
 import ForgotPage from "../pages/Forgot";
+import { RequireLogin } from "../auth/RequireLogin";
 
 const app = (page: PageKey, el: React.ReactNode) => ({ path: PATH[page], element: <Shell page={page}>{el}</Shell> });
 const auth = (page: PageKey, el: React.ReactNode) => ({ path: PATH[page], element: <AuthShell page={page}>{el}</AuthShell> });
@@ -24,9 +25,9 @@ export const router = createBrowserRouter([
   app("market", <MarketPage />),
   app("stock", <StockPage />),
   app("news", <NewsPage />),
-  app("portfolio", <PortfolioPage />),
+  app("portfolio", <RequireLogin page="portfolio"><PortfolioPage /></RequireLogin>),
   app("calendar", <CalendarPage />),
-  app("coach", <CoachPage />),
+  app("coach", <RequireLogin page="coach"><CoachPage /></RequireLogin>),
   app("course", <CoursePage />),
   auth("login", <LoginPage />),
   auth("signup", <SignupPage />),
