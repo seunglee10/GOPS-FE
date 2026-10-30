@@ -84,6 +84,8 @@ import { safeReturnTo } from "../src/auth/AuthProvider";
   assert.equal(safeReturnTo("/\t\\evil.com"), "/");
   assert.equal(safeReturnTo("/login?next=/x"), "/");
   assert.equal(safeReturnTo("/news?n=3#top"), "/news?n=3#top");
+  assert.equal(safeReturnTo("/a/..//evil.com"), "/");
+  assert.ok(!safeReturnTo("/./%2F/evil.com").startsWith("//"));
   assert.equal(safeReturnTo("/\\evil.com"), "/");
   assert.equal(safeReturnTo("https://evil.com"), "/");
   assert.equal(safeReturnTo("/login?next=/"), "/");

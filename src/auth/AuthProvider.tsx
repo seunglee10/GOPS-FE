@@ -56,7 +56,10 @@ export function safeReturnTo(value: string | null | undefined): string {
   let url: URL;
   try { url = new URL(raw, base); } catch { return "/"; }
   if (url.origin !== base || url.pathname === LOGIN_PATH || url.pathname.startsWith(`${LOGIN_PATH}/`)) return "/";
-  return `${url.pathname}${url.search}${url.hash}`;
+  // 정규화 결과를 다시 검사한다. "/a/..//evil.com" 은 정규화하면 "//evil.com" 이 된다
+  const out = `${url.pathname}${url.search}${url.hash}`;
+  if (!out.startsWith("/") || out.startsWith("//") || out.includes("\\")) return "/";
+  return out;
 }
 
 /**
