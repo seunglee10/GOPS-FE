@@ -10,9 +10,9 @@ import { useSymbolMap } from "./useSymbolMap";
 import { useWatchlist } from "../../data/hooks/useWatchlist";
 import { useAccount } from "../../data/hooks/useAccount";
 import { useRecent } from "../../data/hooks/useRecent";
-import { TERM_NAME } from "../../data/terms";
 import { WATCH_AI_LINE, RECENT_TODAY, RECENT_YESTERDAY } from "../../data/mock/user";
 import { Thread } from "./Thread";
+import { DrawerLearn } from "./learn/DrawerLearn";
 import type { Actions } from "./actions";
 import type { PageKey } from "../nav";
 
@@ -97,23 +97,6 @@ function DrawerOther({ tab, act }: { tab: DwTab; act: Actions }) {
     <div className="dw-sub"><b>어제</b></div>
     {yesterday.map(sym => <DwRow key={sym} sym={sym} />)}
   </div></>;
-}
-
-/* 사이드바 '용어 풀이': 사전 하나만 맡는다. 용어 카드 본문(termCard)은 종목 화면 작업에서 채운다 */
-function DrawerLearn({ page, act }: { page: PageKey; act: Actions }) {
-  const lterm = act.q("lterm");
-  if (lterm && TERM_NAME[lterm]) {
-    return <><div className="dw-head"><button className="iconbtn lp-back" onClick={() => act.set("lterm", "")} aria-label="목록으로"><Ic name="chevR" /></button><b>{TERM_NAME[lterm]}</b><span className="spacer"></span></div>
-      <div className="dw-body lp-term">
-        {page !== "stock" ? <p className="lp-where muted">그림은 엔비디아(NVDA) 차트로 보여 드려요.</p> : null}
-        <Link className="lp-row lp-course" to={`/course?topic=${lterm}`}><span className="t"><b>실전 차트로 확인하기</b></span><Ic name="chevR" /></Link>
-      </div></>;
-  }
-  const all = Object.keys(TERM_NAME);
-  return <><div className="dw-head"><b>용어 풀이</b><span className="spacer"></span></div>
-    <div className="dw-body">
-      <div className="dw-sub"><b>전체 용어</b></div>{all.map(t => <button key={t} className="lp-row" data-topic={t} onClick={() => act.set("lterm", t)}><span className="t">{TERM_NAME[t]}</span><Ic name="chevR" /></button>)}
-    </div></>;
 }
 
 function GuestState({ icon, title, body }: { icon: IconName; title: string; body: ReactNode }) {

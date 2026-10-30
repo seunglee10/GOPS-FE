@@ -98,4 +98,5 @@ export function newsDay(rel: string): Date | null {
   return d;
 }
 export const newsId = (i: number): string => `n_${i}`;
-export const newsIndex = (id: string): number => { const m = /^n_(\d+)$/.exec(id); return m ? +m[1] : -1; };
+/* 목업 주소 ?n=3 처럼 번호만 와도 같은 기사로 읽는다 */
+export const newsIndex = (id: string): number => { const m = /^(?:n_)?(\d+)$/.exec(id); return m ? +m[1] : -1; };
