@@ -9,6 +9,8 @@ import { useToast } from "./ToastProvider";
 import { useWatchlist } from "../../data/hooks/useWatchlist";
 import { useSymbolMap } from "./useSymbolMap";
 import { PATH, type PageKey } from "../nav";
+import { useAuth } from "../../auth/AuthProvider";
+import { dataSourceKind } from "../../data/source";
 
 export const NEED = ["oi-submit", "alert-save", "order", "rule", "rule-res", "star", "send", "pick", "example", "toggle-rule", "guard", "unwatch", "submit-order", "submit-rule", "ask-level", "open-ai"] as const;
 export type NeedAction = typeof NEED[number];
@@ -27,6 +29,7 @@ export function useActions(page: PageKey) {
   const navigate = useNavigate();
   const watch = useWatchlist();
   const syms = useSymbolMap();
+  const auth = useAuth();
 
   /* 로그인이 필요한 행동은 먼저 막는다. 막혔으면 true */
   const requireLogin = useCallback((action: NeedAction | string): boolean => {
@@ -54,7 +57,15 @@ export function useActions(page: PageKey) {
     me() { setQ({ me: q("me") ? null : "1", bell: null }); },
     bell() { setQ({ bell: q("bell") ? null : "1" }); },
     menu(id: string) { setQ({ menu: q("menu") === id ? null : id }); },
-    logout() { prefs.guest.set(true); prefs.dw.set(null); window.location.assign(PATH.home); },
+    /* 목업 3339줄: gops.guest 를 켜고 홈으로. api 모드는 POST /api/auth/logout 으로 세션을 끝낸다 (D40) */
+    logout() {
+      prefs.dw.set(null);
+      if (dataSourceKind() === "api") {
+        void auth.logout().then(ok => ok ? window.location.assign(PATH.home) : toast("로그아웃하지 못했어요. 잠시 뒤 다시 시도해 주세요.", { error: true }));
+        return;
+      }
+      prefs.guest.set(true); window.location.assign(PATH.home);
+    },
     thread() { setQ({ dw: dw() === "ai" ? null : "ai", agent: ag() || "1" }); },
     rail(tab: DwTab) { setQ(dw() === tab ? { dw: null } : (tab === "ai" ? { dw: "ai", agent: ag() || "1" } : { dw: tab })); },
     railFold() { setQ({ dw: dw() ? null : (prefs.dwLast.get() || "watch") }); },
@@ -114,6 +125,6 @@ export function useActions(page: PageKey) {
       else setQ({ toast: null });
     },
     toast,
-  }), [q, setQ, go, requireLogin, starSet, guest, dw, ag, page, toast, toasts, clear, syms]);
+  }), [q, setQ, go, requireLogin, starSet, guest, dw, ag, page, toast, toasts, clear, syms, auth]);
 }
 export type Actions = ReturnType<typeof useActions>;

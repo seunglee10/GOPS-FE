@@ -13,6 +13,7 @@
     "test:layout": "node scripts/run-layout-tests.mjs",
     "test:ai-coach": "node scripts/run-ai-coach-contract-tests.mjs",
     "test:alerts": "node scripts/run-alert-tests.mjs",
+    "test:auth": "node scripts/run-auth-tests.mjs",
     "test:chart-visual": "playwright test --project=desktop",
     "test:bundle-size": "node scripts/check-bundle-size.mjs"
   },
