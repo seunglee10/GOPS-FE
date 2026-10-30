@@ -1,6 +1,7 @@
 /* 뉴스 화면. 목업 gops.js pageNews(2222)·newsHub(2187)·relStocks(2164).
    인기 뉴스는 서버가 정한 순서(sort=hot)로만 줄 세우고 조회 수는 보여 주지 않는다. 관련 종목은 이름만 (등락률 없음) */
 import { Link } from "react-router-dom";
+import { safeExternalUrl } from "../../app/format";
 import type { NewsCategory, NewsItem } from "../../api/types";
 import { usePage } from "../../app/shell/Shell";
 import { useActions } from "../../app/shell/actions";
@@ -90,7 +91,7 @@ function Article({ id }: { id: string }) {
       <h1>{a.titleKo}</h1>
       {a.bodyKo.map((p, i) => <p key={i}>{p}</p>)}
       {a.relatedSymbols.length ? <div className="news-rel"><span className="t-caption">관련 종목</span><div>{a.relatedSymbols.map(r => <Link key={r.symbol} className="news-sym" to={`/stock?s=${r.symbol}`}><Mark symbol={r.symbol} color={syms[r.symbol]?.color} /><b>{r.nameKo || syms[r.symbol]?.nameKo || EXTRA_NAME[r.symbol] || r.symbol}</b></Link>)}</div></div> : null}
-      <div className="news-acts"><button className="btn sm outline" onClick={act.openAi}><Ic name="spark" />이 뉴스 AI에게 묻기</button><a className="linkbtn" href={a.url || "#"}>{a.source} 원문 보기</a></div>
+      <div className="news-acts"><button className="btn sm outline" onClick={act.openAi}><Ic name="spark" />이 뉴스 AI에게 묻기</button>{safeExternalUrl(a.url) ? <a className="linkbtn" href={safeExternalUrl(a.url)} target="_blank" rel="noopener noreferrer">{a.source} 원문 보기</a> : null}</div>
     </article> : error ? <article className="panel news-read"><div className="state"><h3>뉴스를 찾지 못했어요</h3><p>목록에서 다른 뉴스를 골라 주세요.</p></div></article> : <article className="panel news-read" />}
   </div>;
 }
