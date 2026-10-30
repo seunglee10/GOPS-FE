@@ -1,6 +1,6 @@
 /* 드로어(오른쪽 패널): 관심·내 투자·최근 본·용어 풀이·AI 질문. 목업 gops.js 380~505줄, 1698~1718줄, 3151~3156줄, 크기 조절 3498~3522줄 */
-import { useEffect, useRef, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Ic, type IconName } from "../icons";
 import { pct, tone, useCurrency, useFormat } from "../format";
 import { prefs, type DwTab } from "../store";
@@ -13,6 +13,8 @@ import { useRecent } from "../../data/hooks/useRecent";
 import { TERM_NAME } from "../../data/terms";
 import { WATCH_AI_LINE, RECENT_TODAY, RECENT_YESTERDAY } from "../../data/mock/user";
 import { Thread } from "./Thread";
+import { hlTopic, topicCount, useTopicHover } from "../topics";
+import { DrawerTerm } from "../../pages/Stock/TermCard";
 import type { Actions } from "./actions";
 import type { PageKey } from "../nav";
 
@@ -25,7 +27,7 @@ export function Drawer({ page, act }: { page: PageKey; act: Actions }) {
   useEffect(() => {
     document.body.classList.toggle("dw-push", !!tab);
     if (!tab || !el.current) return;
-    const set = () => document.body.style.setProperty("--dw-push", el.current!.getBoundingClientRect().width + "px");
+    const set = () => { if (el.current) document.body.style.setProperty("--dw-push", el.current.getBoundingClientRect().width + "px"); };
     set(); const ro = new ResizeObserver(set); ro.observe(el.current); return () => ro.disconnect();
   }, [tab]);
   if (!tab) return <aside id="thread" />;
@@ -99,20 +101,32 @@ function DrawerOther({ tab, act }: { tab: DwTab; act: Actions }) {
   </div></>;
 }
 
-/* 사이드바 '용어 풀이': 사전 하나만 맡는다. 용어 카드 본문(termCard)은 종목 화면 작업에서 채운다 */
+/* 사이드바 '용어 풀이': 사전 하나만 맡는다 (목업 drawerLearn 1698). 지금 화면에 나온 용어를 먼저, 마우스를 올리면 화면에 테두리.
+   고른 용어의 카드 본문은 종목 화면의 용어 카드(DrawerTerm)와 같다 */
 function DrawerLearn({ page, act }: { page: PageKey; act: Actions }) {
   const lterm = act.q("lterm");
+  const [cnt, setCnt] = useState<Record<string, number>>({});
+  const { search } = useLocation();
+  useTopicHover(lterm);
+  /* 화면이 다 그려진 뒤에 센다 (목업도 다음 프레임에 다시 그렸다) */
+  useEffect(() => {
+    let raf = requestAnimationFrame(() => { raf = requestAnimationFrame(() => {
+      setCnt(Object.fromEntries(Object.keys(TERM_NAME).map(t => [t, topicCount(t)])));
+      hlTopic(lterm);
+    }); });
+    return () => cancelAnimationFrame(raf);
+  }, [lterm, search]);
+  useEffect(() => () => hlTopic(null), []);
   if (lterm && TERM_NAME[lterm]) {
-    return <><div className="dw-head"><button className="iconbtn lp-back" onClick={() => act.set("lterm", "")} aria-label="목록으로"><Ic name="chevR" /></button><b>{TERM_NAME[lterm]}</b><span className="spacer"></span></div>
-      <div className="dw-body lp-term">
-        {page !== "stock" ? <p className="lp-where muted">그림은 엔비디아(NVDA) 차트로 보여 드려요.</p> : null}
-        <Link className="lp-row lp-course" to={`/course?topic=${lterm}`}><span className="t"><b>실전 차트로 확인하기</b></span><Ic name="chevR" /></Link>
-      </div></>;
+    const s = page === "stock" ? (act.q("s") || "NVDA").toUpperCase() : "NVDA";
+    return <DrawerTerm s={s} lterm={lterm} here={cnt[lterm] ?? 0} notStock={page !== "stock"} onBack={() => act.set("lterm", "")} />;
   }
-  const all = Object.keys(TERM_NAME);
+  const all = Object.keys(TERM_NAME), ctx = all.filter(t => cnt[t] > 0), rest = all.filter(t => !cnt[t]);
+  const row = (t: string) => <button key={t} className="lp-row" data-topic={t} onClick={() => act.set("lterm", t)}><span className="t">{TERM_NAME[t]}{cnt[t] ? <small>화면에 {cnt[t]}곳</small> : null}</span><Ic name="chevR" /></button>;
   return <><div className="dw-head"><b>용어 풀이</b><span className="spacer"></span></div>
     <div className="dw-body">
-      <div className="dw-sub"><b>전체 용어</b></div>{all.map(t => <button key={t} className="lp-row" data-topic={t} onClick={() => act.set("lterm", t)}><span className="t">{TERM_NAME[t]}</span><Ic name="chevR" /></button>)}
+      {ctx.length ? <><div className="dw-sub"><b>이 화면에 나온 용어</b><small>마우스를 올리면 화면에 표시돼요</small></div>{ctx.map(row)}</> : null}
+      <div className="dw-sub"><b>{ctx.length ? "다른 용어" : "전체 용어"}</b></div>{rest.map(row)}
     </div></>;
 }
 

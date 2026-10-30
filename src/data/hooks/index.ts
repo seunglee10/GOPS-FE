@@ -7,3 +7,4 @@ export * from "./useWatchlist"; export * from "./useRecent"; export * from "./us
 export * from "./useAccount"; export * from "./useOrder"; export * from "./useOrders"; export * from "./useRules"; export * from "./useQuickAlert"; export * from "./useNotifications"; export * from "./useGuardrails";
 export * from "./useReview"; export * from "./useCalendar"; export * from "./useCourse"; export * from "./useProgress";
 export * from "./useProfile"; export * from "./useRecommendations"; export * from "./usePreferences";
+export * from "./useInvestorFlows"; export * from "./useCompare";

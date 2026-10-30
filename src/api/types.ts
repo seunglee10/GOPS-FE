@@ -77,6 +77,8 @@ export type MoverItem = {
   chartNote: string | null;
   /** 국내 종목(KR_S)이면 KRW. v1 API 는 USD 만 준다 */
   currency?: "USD" | "KRW";
+  /** 로고가 없는 종목(국내 등)의 회사 색 */
+  color?: string | null;
 };
 export type MoversPayload = { asOf: IsoDateTime; items: MoverItem[] };
 
@@ -140,8 +142,10 @@ export type FundamentalsPoint = {
   netIncome: number | null;
   operatingMargin: number | null;
   eps: number | null;
+  /** 아직 발표 전이라 컨센서스(시장 예상)인 분기 */
+  estimate?: boolean;
 };
-export type FundamentalsPayload = { symbol: string; period: "quarterly" | "annual"; items: FundamentalsPoint[] };
+export type FundamentalsPayload = { symbol: string; period: "quarterly" | "annual"; items: FundamentalsPoint[]; profitability?: ProfitabilityRow[] };
 
 /* ---------- D11 지지·저항 ---------- */
 export type Levels = { sup: number; res: number; target?: number | null; stop?: number | null };
@@ -149,7 +153,7 @@ export type Levels = { sup: number; res: number; target?: number | null; stop?: 
 /* ---------- D12 실적일·차트 이벤트 ---------- */
 export type ChartEvent = { t: Date; k: "earn" | "news"; title: string; n?: number; newsId?: string | null };
 export type UpcomingEvent = { at: Date; title: string; mine: boolean };
-export type ChartEventsPayload = { symbol: string; events: ChartEvent[]; upcoming: UpcomingEvent[]; nextEarningsAt: Date };
+export type ChartEventsPayload = { symbol: string; events: ChartEvent[]; upcoming: UpcomingEvent[]; nextEarningsAt: Date; /** D-day 를 세는 기준일 (마지막 거래일 다음 날). 없으면 오늘 */ asOf?: Date };
 
 /* ---------- D13 뉴스 ---------- */
 export type NewsCategory = "market" | "corp" | "earn" | "rate" | "etf" | "global";
@@ -347,7 +351,7 @@ export type CalendarItem = {
 };
 export type CalendarQuery = { from: IsoDate; to: IsoDate; kind?: CalendarKind; region?: CalendarRegion };
 export type CalendarPayload = { items: CalendarItem[]; today: IsoDate };
-export type CalendarBrief = { week: string; text: string };
+export type CalendarBrief = { week: string; text: string; /** 홈 '주요 일정' 카드에 뽑아 둔 다가올 일정 */ upcoming?: { date: IsoDate; title: string }[] };
 
 /* ---------- D29 코스 ---------- */
 export type CourseChartRow = [date: string, o: number, h: number, l: number, c: number, v: number];
@@ -430,3 +434,24 @@ export type AuthErrorCode =
 export type AuthError = { code: AuthErrorCode; remainingAttempts?: number; lockedUntil?: IsoDateTime; retryAfterSeconds?: number };
 /* 오류 응답은 FastAPI HTTPException 관례대로 { detail: { code, ... } } 로 온다. 계약서의 { code } 표기는 detail 안의 내용 */
 export type ApiErrorEnvelope<T = { code: string }> = { detail: T };
+
+/* ---------- 종목 화면 보조 데이터 (#8). 계약서에 아직 번호가 없다 ---------- */
+/** 수익성 표 한 줄: 값과 섹터 중앙값(%) */
+export type ProfitabilityRow = { labelKo: string; value: number | null; sectorMedian: number | null };
+/** 기관 보유·내부자 거래·공매도. v1 API 는 제공하지 않아 null 을 돌려준다 */
+export type InsiderTrade = { date: string; role: string; side: OrderSide; shares: number };
+export type InvestorFlows = {
+  symbol: string;
+  institutionalPercent: number;
+  institutionalChangePp: number;
+  institutionCount: number;
+  insiderTrades: InsiderTrade[];
+  shortPercent: number;
+  /** 지난 공시 6회 (오래된 것부터). 최근 값은 shortPercent */
+  shortHistory: number[];
+  daysToCover: number;
+  borrowFeePercent: number;
+};
+/** 비교 탭 한 줄 */
+export type CompareItem = { symbol: string; nameKo: string | null; changePercent: number; return3mPercent: number | null; per: number | null; operatingMarginPercent: number | null; volumeRatio20d: number | null };
+export type ComparePayload = { items: CompareItem[] };
