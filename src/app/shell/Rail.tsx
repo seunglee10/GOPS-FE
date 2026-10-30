@@ -10,7 +10,7 @@ export function Rail({ act }: { act: Actions }) {
   return (
     <nav className="rail" id="rail" aria-label="오른쪽 패널">
       <button className="rail-fold" onClick={act.railFold} aria-label={tab ? "패널 접기" : "패널 펼치기"}><Ic name={tab ? "foldR" : "foldL"} /></button>
-      {RAIL.map(([k, t, i]) => <button key={k} className="rail-it" onClick={() => act.rail(k)} aria-pressed={tab === k}><span className="ri"><Ic name={i} /></span><span>{t}</span></button>)}
+      {RAIL.map(([k, t, i]) => <button key={k} className="rail-it" data-tab={k} onClick={() => act.rail(k)} aria-pressed={tab === k}><span className="ri"><Ic name={i} /></span><span>{t}</span></button>)}
     </nav>
   );
 }

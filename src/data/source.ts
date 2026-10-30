@@ -76,6 +76,10 @@ export interface DataSource {
   recommendations(): Promise<T.RecommendationsPayload>;                         // D33
   preferences(): Promise<T.PreferencesPayload>;                                 // D34
   putPreferences(data: T.PreferencesData): Promise<T.PreferencesPayload>;       // D34
+
+  /* 종목 화면 보조 (#8) */
+  investorFlows(symbol: string): Promise<T.InvestorFlows | null>;               // 없으면 null
+  compare(symbols: string[]): Promise<T.ComparePayload>;
 }
 
 export class NotImplementedError extends Error {

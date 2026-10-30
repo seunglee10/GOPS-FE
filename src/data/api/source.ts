@@ -111,4 +111,8 @@ export const apiSource: DataSource = {
   recommendations: notImpl("GET /api/recommendations/stocks/latest"),
   preferences: notImpl("GET /api/me/preferences"),
   putPreferences: notImpl("PUT /api/me/preferences"),
+
+  /* v1 은 미국 종목만이고 기관·공매도 데이터가 없다: 화면은 '제공하지 않아요' 상태를 그린다 */
+  async investorFlows() { return null; },
+  compare: notImpl("GET /api/stocks/compare"),
 };

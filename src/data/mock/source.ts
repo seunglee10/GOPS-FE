@@ -7,14 +7,16 @@ import { S, SECTORS, KR_S, FX, CASH, TRADE, WHY, CHART, MKT, MKT_SESSIONS, ST, c
 import { candlesOf, cxSeries, levelsOf, volX, prevClose, swingOf } from "./candles";
 import { HOLD, RULES, ORDERS, ACCOUNT, ACTIVITY, HOLD_SECTOR, performanceSeries, WEIGHT_BASE } from "./portfolio";
 import { NEWS, NEWS_CAT, NEWS_STAT, newsId, newsIndex } from "./news";
-import { CAL_EV, CAL_AI, CAL_Y, CAL_M, CAL_TODAY } from "./calendar";
+import { CAL_EV, CAL_AI, CAL_Y, CAL_M, CAL_TODAY, HOME_NEXT_EVENTS } from "./calendar";
 import { COURSE, COURSE_ID, COURSE_TITLE, DAYS } from "./course";
 import { COURSE_CHARTS } from "./courseCharts";
 import { T as TRADES, AUG, MONTH, H, HABIT_NAME, GUARDRAILS, reviewKpi } from "./coach";
-import { factsOf, PEERS, chartEventsOf, upcomingOf, earnDateOf } from "./facts";
+import { factsOf, PEERS, chartEventsOf, upcomingOf, earnDateOf, AI_TODAY } from "./facts";
 import { aiSummary, fixedAnswer, ANSWER_DELAY_MS, FIXED_THREAD, FIXED_THREAD_TITLE } from "./ai";
 import { DEMO_USER, WATCH, RECENT, RECENT_SEARCHES, HOT_SYMBOLS, BELL_ITEMS, RECOMMENDED } from "./user";
 import { liveStoreOf } from "./live";
+import { investorFlowsOf, fundamentalsOf, compareOf, volumeSharesOf } from "./stockExtra";
+import { mapChg } from "./candles";
 
 const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const NOW = "2026-09-30T20:00:00Z";
@@ -40,7 +42,7 @@ export const mockSource: DataSource = {
 
   async symbols() { return { items: Object.keys(S).map(info) }; },
   async heatmap() {
-    return { universe: "sp500", generatedAt: NOW, items: SECTORS.flatMap(([name, t]) => t.map(([symbol, cap, d]) => ({ symbol, nameKo: ko(symbol), sectorLabelKo: name, marketCap: cap * 1e9, changePercent: d }))) };
+    return { universe: "sp500", generatedAt: NOW, items: SECTORS.flatMap(([name, t]) => t.map(([symbol, cap, d]) => ({ symbol, nameKo: ko(symbol), sectorLabelKo: name, marketCap: cap * 1e9, changePercent: d, changePercent1w: mapChg(symbol, d, "1w"), changePercent1m: mapChg(symbol, d, "1m") }))) };
   },
   async indices() {
     const names: Record<string, string> = { "코스피": "^KS11", "코스닥": "^KQ11", "달러 환율": "KRW=X", "VIX": "^VIX", "나스닥 100 선물": "NQ=F", "나스닥": "^IXIC", "S&P 500": "^GSPC", "필라델피아 반도체": "^SOX" };
@@ -53,7 +55,7 @@ export const mockSource: DataSource = {
     const rows = { trade: byTrade(pool), volume: [...pool].sort((a, b) => VOL(b) - VOL(a)),
       up: pool.filter(k => ST(k)!.d > 0).sort((a, b) => ST(b)!.d - ST(a)!.d), down: pool.filter(k => ST(k)!.d < 0).sort((a, b) => ST(a)!.d - ST(b)!.d) }[sort];
     const items: T.MoverItem[] = rows.slice(0, limit ?? rows.length).map(k => ({
-      symbol: k, nameKo: ko(k), price: ST(k)!.p, changePercent: ST(k)!.d, currency: KR_S[k] ? "KRW" : "USD",
+      symbol: k, nameKo: ko(k), price: ST(k)!.p, changePercent: ST(k)!.d, currency: KR_S[k] ? "KRW" : "USD", color: ST(k)!.c,
       dollarVolume: tradeB(k) != null ? tradeB(k)! * 1e9 : null, volume: TRADE[k] || KR_S[k] ? VOL(k) : null, marketCap: capB(k) * 1e9,
       volumeRatio20d: S[k] ? volX(k) : null, issue: WHY[k]?.[0] ?? null, issueSource: WHY[k]?.[1] ?? null, issueNewsId: null, chartNote: CHART[k] ?? null }));
     return { asOf: NOW, items };
@@ -67,12 +69,12 @@ export const mockSource: DataSource = {
     const all = SECTORS.flatMap(([, t]) => t).sort((a, b) => b[1] - a[1]), rank = all.findIndex(t => t[0] === symbol);
     return { symbol, nameKo: st.ko, exchangeKo: st.ex, price: st.p, change: st.p - prevClose(symbol), changePercent: st.d, marketCap: st.cap * 1e9, marketCapRank: rank >= 0 ? rank + 1 : null,
       per: F.per, sectorPer: F.sper, sectorLabelKo: sec === "시장" ? null : sec, low52: F.lo, high52: F.hi, dayLow: last.l, dayHigh: last.h,
-      volume: last.v * 1e6, avgVolume20d: last.v * 1e6 / F.x, volumeRatio20d: F.x, dollarVolume: TRADE[symbol] ? TRADE[symbol] * 1e9 : null,
+      volume: volumeSharesOf(symbol), avgVolume20d: volumeSharesOf(symbol) / F.x, volumeRatio20d: F.x, dollarVolume: (TRADE[symbol] || st.cap / 300) * 1e9,
       peers: Object.entries(PEERS).filter(([k]) => k !== symbol).map(([k, per]) => ({ symbol: k, nameKo: ko(k), per })), asOf: NOW };
   },
-  async fundamentals(symbol, period = "quarterly") { return { symbol, period, items: [] }; },
+  async fundamentals(symbol, period = "quarterly") { return fundamentalsOf(symbol, period); },
   async levels(symbol) { return { ...levelsOf(symbol), target: null, stop: null }; },
-  async chartEvents(symbol) { return { symbol, events: chartEventsOf(symbol), upcoming: upcomingOf(symbol), nextEarningsAt: earnDateOf(symbol) }; },
+  async chartEvents(symbol) { return { symbol, events: chartEventsOf(symbol), upcoming: upcomingOf(symbol), nextEarningsAt: earnDateOf(symbol), asOf: new Date(AI_TODAY) }; },
 
   async news(query) {
     let idx = NEWS.map((_, i) => i);
@@ -170,7 +172,10 @@ export const mockSource: DataSource = {
       actual: e.res?.[0] ?? null, forecast: e.res?.[1] ?? null, previous: e.res?.[2] ?? null }));
     return { items, today: `${CAL_Y}-${String(CAL_M).padStart(2, "0")}-${String(CAL_TODAY).padStart(2, "0")}` };
   },
-  async calendarBrief(week = "2026-W43") { return { week, text: CAL_AI }; },
+  async calendarBrief(week = "2026-W43") {
+    const up = HOME_NEXT_EVENTS.map(t => CAL_EV.find(e => e.t === t)).filter(e => !!e).map(e => ({ date: `${CAL_Y}-${String(CAL_M).padStart(2, "0")}-${String(e!.d).padStart(2, "0")}`, title: e!.t }));
+    return { week, text: CAL_AI, upcoming: up };
+  },
   async course(courseId) {
     return { courseId, titleKo: COURSE_TITLE, days: Object.entries(DAYS).map(([day, titleKo]) => ({ day: +day, titleKo })), questions: COURSE, charts: COURSE_CHARTS };
   },
@@ -182,6 +187,9 @@ export const mockSource: DataSource = {
   async recommendations() { return { generatedAt: NOW, items: RECOMMENDED.map(k => ({ symbol: k, nameKo: ko(k), reason: WHY[k]?.[0] ?? "", score: null })) }; },
   async preferences() { return { version: 1, updatedAt: null, data: { cur: prefs.cur.get(), dwW: prefs.dwW.get() || null, brand: prefs.brand.get() } }; },
   async putPreferences(data) { return { version: 1, updatedAt: NOW, data }; },
+
+  async investorFlows(symbol) { return S[symbol] ? investorFlowsOf(symbol) : null; },
+  async compare(symbols) { return compareOf(symbols); },
 };
 void COURSE_ID; void RECENT_SEARCHES; void swingOf;   // 페이지 작업에서 쓰는 값. 여기서는 노출만 확인
 

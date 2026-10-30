@@ -25,7 +25,7 @@ export function Drawer({ page, act }: { page: PageKey; act: Actions }) {
   useEffect(() => {
     document.body.classList.toggle("dw-push", !!tab);
     if (!tab || !el.current) return;
-    const set = () => document.body.style.setProperty("--dw-push", el.current!.getBoundingClientRect().width + "px");
+    const set = () => { if (el.current) document.body.style.setProperty("--dw-push", el.current.getBoundingClientRect().width + "px"); };
     set(); const ro = new ResizeObserver(set); ro.observe(el.current); return () => ro.disconnect();
   }, [tab]);
   if (!tab) return <aside id="thread" />;
