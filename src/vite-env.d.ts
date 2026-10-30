@@ -16,3 +16,8 @@ declare module "virtual:gops-ai-coach-replay-candles" {
   ];
   export const replayCandlesBySymbol: Readonly<Record<"AAPL" | "AMZN" | "WMT", readonly ReplayCandleTuple[]>>;
 }
+
+interface ImportMetaEnv {
+  /** 데이터 소스 전환: mock(기본) | api */
+  readonly VITE_DATA_SOURCE?: "mock" | "api";
+}

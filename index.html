@@ -1,34 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GOPS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <title>GOPS Layout Runtime</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet" />
     <script>
-      /* 첫 페인트 전에 테마를 확정한다. 이게 없으면 다크 사용자에게 라이트가 한
-         프레임 번쩍인다. 저장 키와 판정 규칙은 src/theme/themeMode.ts와 같아야 한다. */
+      /* 첫 페인트 전에 테마와 대표색을 확정한다. 이게 없으면 다크 사용자에게 라이트가 한
+         프레임 번쩍인다. gops.css 는 <html data-theme="dark"> 와 <html data-brand="이름"> 을 본다.
+         - 테마: ?theme=dark 가 우선(목업과 같음), 없으면 저장된 gops:theme (light|dark|system)
+         - 대표색: ?brand=이름 이면 gops.brand 에 저장, ?brand=default 면 지움 (목업 220~222줄) */
       (function () {
+        var root = document.documentElement;
+        var params = new URLSearchParams(window.location.search);
         try {
           var mode = window.localStorage.getItem("gops:theme");
           if (mode !== "light" && mode !== "dark" && mode !== "system") {
             mode = "light";
           }
           var dark =
+            params.get("theme") === "dark" ||
             mode === "dark" ||
             (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
           if (dark) {
-            document.documentElement.setAttribute("data-theme", "dark");
+            root.setAttribute("data-theme", "dark");
           }
         } catch (error) {
-          /* localStorage 차단 환경에서는 기본값(라이트)으로 둔다. */
+          if (params.get("theme") === "dark") root.setAttribute("data-theme", "dark");
+        }
+        try {
+          var b = params.get("brand");
+          if (b != null) {
+            b = b.replace(/[<>"'&`]/g, "");
+            if (/^[a-z0-9-]+$/.test(b) && b !== "default") window.localStorage.setItem("gops.brand", b);
+            else window.localStorage.removeItem("gops.brand");
+          }
+          var brand = window.localStorage.getItem("gops.brand");
+          if (brand) root.setAttribute("data-brand", brand);
+        } catch (error) {
+          /* localStorage 차단 환경에서는 기본 파랑으로 둔다. */
         }
       })();
     </script>
   </head>
-  <body>
+  <body data-page="home">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
