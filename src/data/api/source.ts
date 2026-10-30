@@ -3,6 +3,7 @@
 import type * as T from "../../api/types";
 import { NotImplementedError, type DataSource } from "../source";
 import { asString, readArray, readObject } from "../../shared/json";
+import { prefs } from "../../app/store";
 
 async function getJson(url: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(url, { headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) }, ...init });
@@ -93,8 +94,18 @@ export const apiSource: DataSource = {
   progress: notImpl("GET /api/learn/progress"),
   postProgress: notImpl("POST /api/learn/progress"),
 
-  profile: notImpl("GET /api/recommendations/profile"),
-  putProfile: notImpl("PUT /api/recommendations/profile"),
+  /* D32 투자 경험. /api/recommendations/profile 은 riskLevel·recommendationStyle·horizon 이 필수인 추천 설정이라
+     experience 를 담을 자리가 없다. 서버에 자리가 생기기 전까지 이름·이메일은 /api/auth/me, 경험은 gops.exp 에 둔다 */
+  async profile() {
+    const user = readObject(readObject(await getJson("/api/auth/me"))?.user) ?? {};
+    const exp = asString(user.experience);
+    const email = asString(user.email) ?? null;
+    return { name: asString(user.name) ?? email?.split("@")[0] ?? "", email, initials: "SL", experience: exp === "new" || exp === "some" || exp === "pro" ? exp : prefs.exp.get() };
+  },
+  async putProfile(patch) {
+    if ("experience" in patch) prefs.exp.set(patch.experience ?? null);
+    return this.profile();
+  },
   recommendations: notImpl("GET /api/recommendations/stocks/latest"),
   preferences: notImpl("GET /api/me/preferences"),
   putPreferences: notImpl("PUT /api/me/preferences"),
