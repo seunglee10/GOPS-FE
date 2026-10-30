@@ -18,7 +18,7 @@ export const GUEST_MOVERS = ["AMD", "MU", "NVDA", "TSLA", "META", "UNH"];
 export const BELL_ITEMS: Notification[] = [
   { id: "nt1", titleKo: "TSLA 하루 등락률 -5% 이하", metaKo: "9/24 23:02, 규칙 발동", href: "/stock?s=TSLA", read: false, at: "2026-09-24T14:02:00Z" },
   { id: "nt2", titleKo: "NVDA 거래량이 평균의 2배를 넘었어요", metaKo: "오늘 09:40, 에이전트 감지", href: "/stock?s=NVDA&hl=1", read: false, at: "2026-09-30T00:40:00Z" },
-  { id: "nt3", titleKo: "AVGO 매수 10주 체결", metaKo: "9/29 22:31, $179.80", href: "/portfolio?tab=orders", read: true, at: "2026-09-29T13:31:00Z" },
+  { id: "nt3", titleKo: "AVGO 매수 10주 체결", metaKo: "9/29 22:31, $179.80", href: "/portfolio?tab=orders", read: false, at: "2026-09-29T13:31:00Z" },
 ];
 export const BELL_COUNT = 3;
 
