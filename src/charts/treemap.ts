@@ -58,6 +58,7 @@ export type TreemapLayoutSector = { name: string; x: number; y: number; w: numbe
 export function layoutTreemap(sectors: TreemapSector[], W: number, H: number): TreemapLayoutSector[] {
   const SG = 4;                                       // 섹터 사이 간격 (종목 사이는 1px)
   const fits = (c: { w: number; h: number }) => c.w >= 42 && c.h >= 32;           // 티커와 등락률을 쓸 수 있는 최소 크기
+  sectors = sectors.map(([n, t]) => [String(n), t.map(([s, v, d]) => [String(s), Number(v) || 0, Number(d) || 0] as [string, number, number]).filter(x => x[1] > 0)] as TreemapSector).filter(([, t]) => t.length > 0);
   const wavg = (list: [string, number, number][]) => list.reduce((a, [, v, d]) => a + v * d, 0) / list.reduce((a, x) => a + x[1], 0);
   let secList = sectors.map(([n, t]) => ({ n, t, v: t.reduce((s, x) => s + x[1], 0) }));
   let layout: TreemapLayoutSector[] = [];

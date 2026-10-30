@@ -292,7 +292,7 @@ class MainChart {
     // 시간축 표시(실적·뉴스)는 일·주·월 봉에서만. 표시가 캔들을 가리지 않게 아래 여백을 더 둔다
     const evOn = !sp && !intra && S.iv !== "Y";
     // 사이드바에서 켠 52주 고저·내 평단은 화면 밖이어도 보이게 범위에 넣는다
-    const refs = sp ? [] : this.props.refLines;
+    const refs = sp ? [] : this.props.refLines.map(r => ({ ...r, p: Number(r.p) })).filter(r => Number.isFinite(r.p) && r.k in REF_LOOK);
     let lo: number, hi: number;
     if (this.ylock) ({ lo, hi } = this.ylock);
     else { lo = Math.min(...vis.map(b => useC ? b.c : b.l)); hi = Math.max(...vis.map(b => useC ? b.c : b.h));
@@ -351,7 +351,11 @@ class MainChart {
       hl2 = mk(ih, useC ? bars[ih].c : bars[ih].h, true) + (il !== ih ? mk(il, useC ? bars[il].c : bars[il].l, false) : "");
     }
     // 지지·저항선 (누르면 기존 지지선 메뉴와 규칙 만들기). 목표가·손절가는 값이 있을 때만
-    const LV = this.props.levels;
+    const LV0 = this.props.levels, LV: Levels | null = LV0 && Number.isFinite(Number(LV0.sup)) && Number.isFinite(Number(LV0.res)) ? {
+      sup: Number(LV0.sup), res: Number(LV0.res),
+      ...(Number.isFinite(Number(LV0.target1)) && LV0.target1 != null ? { target1: Number(LV0.target1) } : {}),
+      ...(Number.isFinite(Number(LV0.target2)) && LV0.target2 != null ? { target2: Number(LV0.target2) } : {}),
+      ...(Number.isFinite(Number(LV0.stop)) && LV0.stop != null ? { stop: Number(LV0.stop) } : {}) } : null;
     const lvl = (p: number, label: string, c: string, dash: boolean, act: string, ink = "var(--level-ink)") => { const py = y(p); if (py < T || py > mainB) return "";
       return `<g class="lvl"${act ? ` data-act="${act}" tabindex="0" role="button"` : ""} aria-label="${label} ${this.P(p)}"><line x1="${L}" x2="${W - R}" y1="${py}" y2="${py}" stroke="${c}" stroke-width="1.3" ${dash ? 'stroke-dasharray="6 4"' : ""}/>
       <line x1="${L}" x2="${W - R}" y1="${py}" y2="${py}" stroke="transparent" stroke-width="14"/><rect x="${L + 6}" y="${py - 10}" width="${label.length * 12 + 52}" height="20" rx="4" fill="${c}"/><text x="${L + 13}" y="${py + 4}" font-size="11.5" font-weight="600" fill="${ink}">${label} ${this.P(p)}</text></g>`; };
@@ -473,7 +477,7 @@ class MainChart {
     return `<div class="popover cx-evpop" role="dialog" aria-label="${e.k === "earn" ? "실적 발표" : "뉴스"}" style="left:${left}px;bottom:${G.H - py + 14}px">
     <h3>${e.k === "earn" ? "실적 발표" : "뉴스"}<span class="t-caption">${mdw(e.t)}</span></h3>
     ${e.k === "news" ? `<p>${esc(e.title)}</p>` : ""}${fact}
-    ${e.n != null ? `<button class="linkbtn" data-act="news" data-n="${e.n}">기사 보기 ${ic.chevR}</button>` : ""}</div>`;
+    ${e.n != null && Number.isFinite(Number(e.n)) ? `<button class="linkbtn" data-act="news" data-n="${Number(e.n)}">기사 보기 ${ic.chevR}</button>` : ""}</div>`;
   }
   private drawsSVG(G: Geo, onlyV?: boolean) {
     const list = this.draws.concat(this.draft ? [this.draft] : []).filter(d => (d.k === "vline") === !!onlyV);

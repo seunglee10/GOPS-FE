@@ -96,3 +96,35 @@ test("renderCourseChart: 서버에서 올 차트 이름·날짜는 이스케이�
   assert.ok(svg.includes("&lt;script&gt;alert(1)&lt;/script&gt;"));
   assert.ok(svg.includes("일봉&quot;"));
 });
+
+test("sanitizeCourseFig: 숫자는 Number()로, 유한하지 않거나 날짜 꼴이 아니면 버린다", async () => {
+  const { sanitizeCourseFig, sanitizeCourseQuestion } = await import("../courseChart");
+  const bad = { level: "<b>1</b>", mark: "2020-01-03\"><script>", day: "2020-1-3", prev: "yes", type: "evil" } as unknown as Parameters<typeof sanitizeCourseFig>[0];
+  const f = sanitizeCourseFig(bad);
+  assert.equal(f.level, undefined); assert.equal(f.mark, undefined); assert.equal(f.day, undefined); assert.equal(f.prev, false); assert.equal(f.type, undefined);
+  assert.equal(sanitizeCourseFig({ level: "105.5" as unknown as number, mark: "2020-01-03" }).level, 105.5);
+  assert.equal(sanitizeCourseFig({ level: Infinity }).level, undefined);
+  const q = sanitizeCourseQuestion({ id: "x", kind: "tap", fig: {}, tol: "2" as unknown as number, count: "x" as unknown as number, ans: ["1", "a"] as unknown as number[] });
+  assert.equal(q.tol, 2); assert.equal(q.count, undefined); assert.deepEqual(q.ans, [1]);
+});
+
+test("renderCourseChart: 잘못된 level 은 그리지 않고 숫자 level 만 그린다", async () => {
+  const { renderCourseChart, EMPTY_COURSE_STATE } = await import("../courseChart");
+  const rows: CourseRow[] = Array.from({ length: 6 }, (_, i) => [`2020-01-0${i + 1}`, 10, 12, 9, 11, 100]);
+  const chart = { sym: "X", name: "x", iv: "일봉", rows };
+  const evil = renderCourseChart({ q: { id: "x", kind: "choice", fig: { level: "<script>" as unknown as number } }, chart, state: EMPTY_COURSE_STATE });
+  assert.ok(!evil.includes("<script>")); assert.ok(!evil.includes("저항"));
+  assert.ok(renderCourseChart({ q: { id: "x", kind: "choice", fig: { level: 11.5 } }, chart, state: EMPTY_COURSE_STATE }).includes("저항 $11.5"));
+});
+
+test("courseSource: 구조 데이터·평문·HTML 안전 문자열", async () => {
+  const { courseSource, courseSourceInfo, courseSourceText } = await import("../courseChart");
+  const rows: CourseRow[] = Array.from({ length: 4 }, (_, i) => [`2020-01-0${i + 1}`, 10, 12, 9, 11, 100]);
+  const c = { sym: "A&B", name: "<img src=x onerror=alert(1)>", iv: "일봉", rows, split: "<i>2:1</i>" };
+  const info = courseSourceInfo(c, [1, 2]);
+  assert.deepEqual({ ...info, split: info.split }, { name: c.name, sym: "A&B", iv: "일봉", from: "2020-01-02", to: "2020-01-03", partial: true, split: "<i>2:1</i>" });
+  assert.ok(courseSourceText(info).startsWith("<img src=x onerror=alert(1)>(A&B) 일봉, 2020.01.02~2020.01.03 (문제에 필요한 구간만)"));
+  const html = courseSource(c);
+  assert.ok(!html.includes("<img") && !html.includes("<i>"));
+  assert.ok(html.includes("&lt;img src=x onerror=alert(1)&gt;(A&amp;B)"));
+});

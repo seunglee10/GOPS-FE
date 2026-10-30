@@ -63,9 +63,37 @@ export type CourseChartOptions = {
   view?: [number, number];
 };
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const finiteOr = (v: unknown, fb?: number) => { const n = Number(v); return v != null && v !== "" && Number.isFinite(n) ? n : fb; };
+const dateOr = (v: unknown) => (typeof v === "string" && DATE_RE.test(v) ? v : undefined);
+const FIG_TYPES = new Set(["diagram", "volbars", "rsibars", "per"]);
+
+/** 서버에서 온 문제 그림 설정을 그리기 전에 정리한다: 숫자는 Number()로 바꿔 유한하지 않으면 버리고, 날짜는 YYYY-MM-DD 만 남긴다 */
+export function sanitizeCourseFig(f: CourseFig | null | undefined): CourseFig {
+  const src = (f ?? {}) as Record<string, unknown>, level = finiteOr(src.level);
+  return {
+    type: FIG_TYPES.has(src.type as string) ? (src.type as CourseFig["type"]) : undefined,
+    chart: typeof src.chart === "string" ? src.chart : undefined,
+    mark: dateOr(src.mark),
+    day: dateOr(src.day),
+    prev: src.prev === true,
+    mono: src.mono === true,
+    vol: src.vol === true,
+    rsi: src.rsi === true,
+    level: level != null && level > 0 ? level : undefined,
+  };
+}
+/** 문제 전체 정리: 그림 설정과 함께 허용 오차(tol)·고를 개수(count)·정답 번호도 숫자만 남긴다 */
+export function sanitizeCourseQuestion(q: CourseQuestion): CourseQuestion {
+  const tol = finiteOr(q.tol), count = finiteOr(q.count);
+  const ans = typeof q.ans === "function" ? q.ans : Array.isArray(q.ans) ? q.ans.map(a => finiteOr(a)).filter((a): a is number => a != null) : finiteOr(q.ans);
+  return { ...q, fig: sanitizeCourseFig(q.fig), tol: tol != null && tol >= 0 ? Math.floor(tol) : undefined, count: count != null && count > 0 ? Math.floor(count) : undefined, ans };
+}
+const widthOf = (w: unknown) => { const n = finiteOr(w); return n != null && n > 0 ? n : 720; };
+
 /** 캔들 차트 SVG. 날을 고르는 문제는 캔들마다 data-act="cq-tap", 가격을 고르는 문제는 data-act="cq-level" 영역이 들어 있다 */
 export function renderCourseChart(o: CourseChartOptions) {
-  const q = o.q, f = q.fig, QW = o.width ?? 720, QCOMPACT = !!o.compact, CQS = o.state, R = o.chart.rows, n = R.length, done = CQS.checked;
+  const q = sanitizeCourseQuestion(o.q), f = q.fig, QW = widthOf(o.width), QCOMPACT = !!o.compact, CQS = o.state, R = o.chart.rows, n = R.length, done = CQS.checked;
   const [va, vb] = o.view ?? [0, n - 1], nv = vb - va + 1, V = R.slice(va, vb + 1), inV = (i: number) => i >= va && i <= vb;
   const PH = QCOMPACT ? 180 : 250, VH = f.vol ? (QCOMPACT ? 50 : 70) : 0, RH = f.rsi ? (QCOMPACT ? 70 : 90) : 0, T = 26, L = 8, Rt = QCOMPACT ? 50 : 64, H = T + PH + (VH ? VH + 12 : 0) + (RH ? RH + 12 : 0) + 24;
   let lo = Math.min(...V.map(r => r[3])), hi = Math.max(...V.map(r => r[2]));
@@ -132,7 +160,7 @@ export type CourseFigureOptions = Omit<CourseChartOptions, "chart"> & { chart?: 
 
 /** 문제 그림: diagram(캔들 두 개)·volbars(거래량 막대)·rsibars(14일 변화)·per(계산식) 또는 캔들 차트 */
 export function renderCourseFigure(o: CourseFigureOptions) {
-  const q = o.q, f = q.fig, done = o.state.checked, QW = o.width ?? 720;
+  const q = sanitizeCourseQuestion(o.q), f = q.fig, done = o.state.checked, QW = widthOf(o.width);
   if (f.type === "diagram") {
     const Yd = (p: number) => 14 + (100 - p) / 100 * 150;
     return `<svg viewBox="0 0 ${QW} 190" class="qchart">${candleFig(QW * .3, 28, 96, 6, 74, Yd, ["고가", "시가", "종가", "저가"])}${candleFig(QW * .65, 74, 96, 6, 28, Yd, ["고가", "시가", "종가", "저가"])}
@@ -155,13 +183,23 @@ export function renderCourseFigure(o: CourseFigureOptions) {
   if (f.type === "per") return `<div class="eq big"><span><b>$100</b><small>주가</small></span>÷<span><b>$5</b><small>1주당 1년 이익</small></span>=<span><b>${done ? "20배" : "?"}</b><small>PER</small></span></div>
     ${done ? `<div class="cells">${Array.from({ length: 20 }, () => "<i></i>").join("")}</div><p class="cap">칸 하나가 1년치 이익($5)이에요. 20칸을 모아야 주가 $100이 돼요.</p>` : ""}`;
   if (!o.chart) return "";
-  return renderCourseChart({ ...o, chart: o.chart });
+  return renderCourseChart({ ...o, q, chart: o.chart });
 }
 
-/** 문제 아래 출처 한 줄 */
+export type CourseSourceInfo = { name: string; sym: string; iv: string; from: string; to: string; partial: boolean; split?: string };
+
+/** 문제 아래 출처: 문자열로 합치지 않은 구조 데이터 */
+export function courseSourceInfo(c: CourseChartData, view?: [number, number]): CourseSourceInfo {
+  const R = c.rows, [va, vb] = view ?? [0, R.length - 1];
+  return { name: String(c.name), sym: String(c.sym), iv: String(c.iv), from: String(R[va]?.[0] ?? ""), to: String(R[vb]?.[0] ?? ""), partial: va > 0 || vb < R.length - 1, split: c.split ? String(c.split) : undefined };
+}
+/** 출처 한 줄을 평문으로. 텍스트 전용: textContent 나 React 텍스트로만 넣는다 (innerHTML 금지) */
+export function courseSourceText(s: CourseSourceInfo) {
+  return `${s.name}(${s.sym}) ${s.iv}, ${s.from.replace(/-/g, ".")}~${s.to.replace(/-/g, ".")}${s.partial ? " (문제에 필요한 구간만)" : ""}. 출처 Yahoo Finance${s.split ? `. 가격은 ${s.split}을 반영한 값이라 당시 화면의 가격과 달라요` : ""}.`;
+}
+/** 출처 한 줄 (HTML 안전). 이스케이프돼 있어 innerHTML 로 넣어도 된다. 텍스트로 넣을 때는 courseSourceText 를 쓴다 */
 export function courseSource(c: CourseChartData, view?: [number, number]) {
-  const R = c.rows, [va, vb] = view ?? [0, R.length - 1], part = va > 0 || vb < R.length - 1;
-  return `${c.name}(${c.sym}) ${c.iv}, ${R[va][0].replace(/-/g, ".")}~${R[vb][0].replace(/-/g, ".")}${part ? " (문제에 필요한 구간만)" : ""}. 출처 Yahoo Finance${c.split ? `. 가격은 ${c.split}을 반영한 값이라 당시 화면의 가격과 달라요` : ""}.`;
+  return esc(courseSourceText(courseSourceInfo(c, view)));
 }
 
 /** 가격을 고르는 영역(data-act="cq-level")을 누른 자리 → 가격 (목업 cq-level 처리) */
