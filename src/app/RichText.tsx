@@ -15,7 +15,9 @@ export function safeInternalPath(raw: string): string | null {
     const base = "https://gops.invalid";
     const u = new URL(raw, base);
     if (u.origin !== base) return null;
-    return u.pathname + u.search + u.hash;
+    const out = u.pathname + u.search + u.hash;
+    // 정규화 결과도 다시 검사한다 ("/a/..//evil.com" → "//evil.com")
+    return out.startsWith("/") && !out.startsWith("//") && !out.includes("\\") ? out : null;
   } catch {
     return null;
   }
