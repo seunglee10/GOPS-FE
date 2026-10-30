@@ -14,7 +14,7 @@ export function gauge(v: number, max: number, zones: GaugeZone[], ticks: number[
     <rect x="6" y="22" width="${CW - 12}" height="8" rx="4" fill="var(--control)"/>
     ${zones.map(([a, b, c]) => `<rect x="${X(a)}" y="22" width="${X(b) - X(a)}" height="8" fill="${esc(c)}" opacity=".28"/>`).join("")}
     ${zones.map(([a, b, , t]) => t ? `<text x="${(X(a) + X(b)) / 2}" y="46" font-size="11" fill="var(--ink-muted)" text-anchor="middle">${esc(t)}</text>` : "").join("")}
-    ${ticks.map(t => `<line x1="${X(t)}" x2="${X(t)}" y1="20" y2="32" stroke="var(--ink-muted)"/><text x="${X(t)}" y="57" font-size="10.5" fill="var(--muted-soft)" text-anchor="middle">${t}</text>`).join("")}
+    ${ticks.map(t => `<line x1="${X(t)}" x2="${X(t)}" y1="20" y2="32" stroke="var(--ink-muted)"/><text x="${X(t)}" y="57" font-size="10.5" fill="var(--muted-soft)" text-anchor="middle">${esc(String(t))}</text>`).join("")}
     <path d="M${X(v) - 6} 8 h12 l-6 9 z" fill="var(--ink)"/><text x="${X(v)}" y="6" font-size="11.5" font-weight="700" fill="var(--ink)" text-anchor="middle">${esc(fmt(v))}</text>
   </svg>`;
 }
@@ -85,6 +85,7 @@ export function trendLine(C: Bar[], hiIdx: number[], loIdx: number[]) {
 
 /** 홈 시세 카드의 작은 선. seed가 같으면 같은 모양, shape "spike"는 끝에서 치솟는 꼴 */
 export function miniSpark(seed: number, up: boolean, shape?: "spike") {
+  seed = Number(seed) | 0;
   const r = rng(seed), W = 64, H = 36, N = 40; let v = 0; const raw: number[] = [];
   for (let i = 0; i < N; i++) { v += (r() - 0.5) * 2 + (shape === "spike" ? (i > N - 8 ? 2.6 : -0.05) : up ? 0.32 : -0.32); raw.push(v); }
   const lo = Math.min(...raw), hi = Math.max(...raw), y = (x: number) => (H - 5 - (x - lo) / (hi - lo || 1) * (H - 10)).toFixed(1);
