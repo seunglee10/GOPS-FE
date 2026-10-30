@@ -60,7 +60,10 @@ export function useActions(page: PageKey) {
     /* 목업 3339줄: gops.guest 를 켜고 홈으로. api 모드는 POST /api/auth/logout 으로 세션을 끝낸다 (D40) */
     logout() {
       prefs.dw.set(null);
-      if (dataSourceKind() === "api") { void auth.logout().then(() => window.location.assign(PATH.home)); return; }
+      if (dataSourceKind() === "api") {
+        void auth.logout().then(ok => ok ? window.location.assign(PATH.home) : toast("로그아웃하지 못했어요. 잠시 뒤 다시 시도해 주세요.", { error: true }));
+        return;
+      }
       prefs.guest.set(true); window.location.assign(PATH.home);
     },
     thread() { setQ({ dw: dw() === "ai" ? null : "ai", agent: ag() || "1" }); },

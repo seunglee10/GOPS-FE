@@ -95,6 +95,7 @@ export function useDataSource(): DataSource {
 }
 
 export type DataSourceKind = "mock" | "api";
+/** 값이 없거나 틀리면 api(서버 인증)로 둔다. 목업 데이터·데모 사용자는 VITE_DATA_SOURCE=mock 을 명시했을 때만 쓴다 */
 export function dataSourceKind(): DataSourceKind {
-  return import.meta.env.VITE_DATA_SOURCE === "api" ? "api" : "mock";
+  return import.meta.env.VITE_DATA_SOURCE === "mock" ? "mock" : "api";
 }
