@@ -6,7 +6,7 @@ import { Ic } from "../../app/icons";
 import { useQ } from "../../app/query";
 import { useSession } from "../../app/session";
 import { KEYS, prefs, store } from "../../app/store";
-import { hlTopic, topicEls } from "../../app/topics";
+import { hlTopic, topicEls } from "../../app/shell/learn/topics";
 /* 목업은 끝낸 표시로 "done" 을 저장했다. 값이 있기만 하면 끝낸 것으로 본다 */
 const tourDone = () => !!store.get(KEYS.tour);
 
@@ -14,7 +14,7 @@ const TA_CANDLES = [[30, 46, 26, 40], [40, 44, 33, 35], [35, 50, 34, 48], [48, 5
 type Step = { sel: () => (HTMLElement | null)[]; open: boolean; demo?: boolean; title: string; body: string; art: () => ReactNode };
 const learnRows = () => [...document.querySelectorAll<HTMLElement>("#thread .lp-row[data-topic]")];
 const TOUR: Step[] = [
-  { sel: () => [[...document.querySelectorAll<HTMLElement>("#rail .rail-it")].find(b => b.textContent?.includes("용어 풀이")) ?? null], open: false, title: "용어 풀이",
+  { sel: () => [document.querySelector<HTMLElement>('#rail [data-tab="learn"]')], open: false, title: "용어 풀이",
     body: "주식 용어의 뜻과 읽는 법을 모아 둔 사전이에요.",
     art: () => <div className="ta ta1"><div className="ta-rail"><i></i><i></i><i className="on"><Ic name="book" /><small>용어 풀이</small></i></div>
       <div className="ta-panel"><b>용어 풀이</b><small>이 화면에 나온 용어</small><span>거래량</span><span>RSI</span><span>PER</span></div></div> },

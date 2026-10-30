@@ -8,6 +8,7 @@ import { pct, tone, useFormat } from "../../app/format";
 import type { Actions } from "../../app/shell/actions";
 import { REF_LOOK, monthLine } from "../../charts";
 import { useAiSummary, useNews } from "../../data/hooks";
+import { hlTopic } from "../../app/shell/learn/topics";
 import { ddayOf, mdw, swingOf, useStockUi, type RefKey, type StockData } from "./data";
 
 const Fig = ({ k, v, cls = "" }: { k: string; v: React.ReactNode; cls?: string }) => <div><small>{k}</small><b className={cls}>{v}</b></div>;
@@ -38,7 +39,9 @@ export function AiPanels({ D, act }: { D: StockData; act: Actions }) {
   const pos = Math.max(0, Math.min(100, (p - F.lo) / (F.hi - F.lo || 1) * 100));
   const a = Math.min(sw.worst, -sw.typical, -1), b = Math.max(sw.best, sw.typical, 1), x = (v: number) => (v - a) / (b - a) * 100;
   const sup = D.levels?.sup, res = D.levels?.res;
-  const Sec = ({ i, children }: { i: number; children: React.ReactNode }) => <div className="aq-q" data-hl={GUIDE[i].topic}><h3>{GUIDE[i].q}</h3>{children}</div>;
+  /* 칸에 마우스를 올리면 화면에서 그 숫자가 나온 곳을 표시하고, 벗어나면 사이드바에서 열어 둔 용어로 돌린다 (목업 3524~3528) */
+  const back = () => hlTopic(act.dw() === "learn" ? act.q("lterm") : null);
+  const Sec = ({ i, children }: { i: number; children: React.ReactNode }) => <div className="aq-q" data-hl={GUIDE[i].topic} onMouseEnter={() => hlTopic(GUIDE[i].topic)} onMouseLeave={back}><h3>{GUIDE[i].q}</h3>{children}</div>;
   return <section className="panel ai"><div className="panel-body">
     <AiSummaryBlock D={D} act={act} />
     <Sec i={0}><Figs><Fig k="어제보다" v={<span data-live="chg">{pct(chg)}</span>} cls={tone(chg)} /><Fig k="거래량" v={`${F.x.toFixed(1)}배`} /><Fig k={`${D.secName} 업종`} v={pct(D.secAvg)} cls={tone(D.secAvg)} /></Figs>

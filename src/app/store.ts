@@ -10,6 +10,7 @@ export const store = {
 export const KEYS = {
   cur: "gops.cur",         // 통화: "usd" 만 저장, 원화는 지움
   exp: "gops.exp",         // 투자 경험 new|some|pro
+  expOwner: "gops.exp.owner", // gops.exp 를 저장한 계정(이메일). 다른 계정이 로그인하면 gops.exp 를 지운다
   ai: "gops.ai",           // AI 대화 상태 new|loading|1 (loading 은 다시 열 때 1 로 읽는다)
   dw: "gops.dw",           // 펼친 오른쪽 탭 ai|watch|hold|recent|learn
   dwLast: "gops.dw.last",  // 마지막으로 펼쳤던 탭 (접었다 펼 때)
@@ -31,6 +32,7 @@ export const isDwTab = (v: string | null | undefined): v is DwTab => DW_TABS.inc
 
 export const prefs = {
   cur: { get: (): "usd" | null => (store.get(KEYS.cur) === "usd" ? "usd" : null), set: (v: string | null) => store.set(KEYS.cur, v || null) },
+  expOwner: { get: (): string | null => store.get(KEYS.expOwner), set: (v: string | null) => store.set(KEYS.expOwner, v) },
   exp: { get: (): Experience | null => { const v = store.get(KEYS.exp); return v === "new" || v === "some" || v === "pro" ? v : null; }, set: (v: Experience | null) => store.set(KEYS.exp, v) },
   /* 목업 AI_STATE 초기값: 저장된 값이 loading 이면 답변이 있는 상태(1)로 읽는다 */
   ai: { get: (): string | null => { const v = store.get(KEYS.ai); return v === "loading" ? "1" : v; }, set: (v: string | null) => store.set(KEYS.ai, v) },

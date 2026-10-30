@@ -4,7 +4,8 @@ import type { Actions } from "./actions";
 import { backHref } from "./actions";
 import { useRules } from "../../data/hooks/useRules";
 import { useProfile } from "../../data/hooks/useProfile";
-import { prefs } from "../store";
+import { useState } from "react";
+import { prefs, type Experience } from "../store";
 
 export function Dialog({ act }: { act: Actions }) {
   const k = act.q("dialog");
@@ -34,13 +35,19 @@ const STEPS: [string, string][] = [["처음이에요", "캔들, 거래량 같은
 function ProfileDialog({ act }: { act: Actions }) {
   const { data, update } = useProfile();
   const welcome = act.q("welcome") === "1";
-  const cur = data?.experience ?? prefs.exp.get() ?? "some";
+  /* 고른 값은 저장을 누를 때 putProfile 로 보낸다. 고르는 동안은 목업처럼 gops.exp 에도 둔다 */
+  const [picked, setPicked] = useState<Experience | null>(null);
+  const cur = picked ?? data?.experience ?? prefs.exp.get() ?? "some";
   const sel = EXP.indexOf(cur);
+  const save = async () => {
+    try { await update.run({ experience: cur }); } catch { /* 저장소에는 이미 들어가 있다 */ }
+    act.saveProfile();
+  };
   return <>
     <span className="t-caption">{act.q("signup") === "1" ? "가입 마지막 단계예요. 한 가지만 여쭤볼게요." : welcome ? "처음 오셨네요. 한 가지만 여쭤볼게요." : "투자 경험 수정"}</span>
     <h2 style={{ marginTop: 8 }}>주식 투자는 얼마나 해 보셨나요?</h2><p>처음이라고 고르면 차트 읽는 법을 실전 차트로 익히는 코스를 안내해 드려요.</p>
     <div className="body"><div className="choice" role="radiogroup">{STEPS.map(([t, d], i) => (
-      <button key={t} role="radio" aria-checked={i === sel} onClick={() => { act.exp(EXP[i]); void update.run({ experience: EXP[i] }); }}><span className="o"></span><span><b>{t}</b><small>{d}</small></span></button>))}</div></div>
-    <div className="actions"><button className="btn ghost" onClick={act.closeDialog}>{welcome ? "나중에 하기" : "취소"}</button><button className="btn primary" onClick={act.saveProfile}>저장</button></div>
+      <button key={t} role="radio" aria-checked={i === sel} onClick={() => { act.exp(EXP[i]); setPicked(EXP[i]); }}><span className="o"></span><span><b>{t}</b><small>{d}</small></span></button>))}</div></div>
+    <div className="actions"><button className="btn ghost" onClick={act.closeDialog}>{welcome ? "나중에 하기" : "취소"}</button><button className={`btn primary${update.pending ? " is-loading" : ""}`} onClick={() => void save()}>저장</button></div>
   </>;
 }

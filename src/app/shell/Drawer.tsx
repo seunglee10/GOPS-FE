@@ -1,6 +1,6 @@
 /* 드로어(오른쪽 패널): 관심·내 투자·최근 본·용어 풀이·AI 질문. 목업 gops.js 380~505줄, 1698~1718줄, 3151~3156줄, 크기 조절 3498~3522줄 */
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Ic, type IconName } from "../icons";
 import { pct, tone, useCurrency, useFormat } from "../format";
 import { prefs, type DwTab } from "../store";
@@ -10,11 +10,9 @@ import { useSymbolMap } from "./useSymbolMap";
 import { useWatchlist } from "../../data/hooks/useWatchlist";
 import { useAccount } from "../../data/hooks/useAccount";
 import { useRecent } from "../../data/hooks/useRecent";
-import { TERM_NAME } from "../../data/terms";
 import { WATCH_AI_LINE, RECENT_TODAY, RECENT_YESTERDAY } from "../../data/mock/user";
 import { Thread } from "./Thread";
-import { hlTopic, topicCount, useTopicHover } from "../topics";
-import { DrawerTerm } from "../../pages/Stock/TermCard";
+import { DrawerLearn } from "./learn/DrawerLearn";
 import type { Actions } from "./actions";
 import type { PageKey } from "../nav";
 
@@ -99,35 +97,6 @@ function DrawerOther({ tab, act }: { tab: DwTab; act: Actions }) {
     <div className="dw-sub"><b>어제</b></div>
     {yesterday.map(sym => <DwRow key={sym} sym={sym} />)}
   </div></>;
-}
-
-/* 사이드바 '용어 풀이': 사전 하나만 맡는다 (목업 drawerLearn 1698). 지금 화면에 나온 용어를 먼저, 마우스를 올리면 화면에 테두리.
-   고른 용어의 카드 본문은 종목 화면의 용어 카드(DrawerTerm)와 같다 */
-function DrawerLearn({ page, act }: { page: PageKey; act: Actions }) {
-  const lterm = act.q("lterm");
-  const [cnt, setCnt] = useState<Record<string, number>>({});
-  const { search } = useLocation();
-  useTopicHover(lterm);
-  /* 화면이 다 그려진 뒤에 센다 (목업도 다음 프레임에 다시 그렸다) */
-  useEffect(() => {
-    let raf = requestAnimationFrame(() => { raf = requestAnimationFrame(() => {
-      setCnt(Object.fromEntries(Object.keys(TERM_NAME).map(t => [t, topicCount(t)])));
-      hlTopic(lterm);
-    }); });
-    return () => cancelAnimationFrame(raf);
-  }, [lterm, search]);
-  useEffect(() => () => hlTopic(null), []);
-  if (lterm && TERM_NAME[lterm]) {
-    const s = page === "stock" ? (act.q("s") || "NVDA").toUpperCase() : "NVDA";
-    return <DrawerTerm s={s} lterm={lterm} here={cnt[lterm] ?? 0} notStock={page !== "stock"} onBack={() => act.set("lterm", "")} />;
-  }
-  const all = Object.keys(TERM_NAME), ctx = all.filter(t => cnt[t] > 0), rest = all.filter(t => !cnt[t]);
-  const row = (t: string) => <button key={t} className="lp-row" data-topic={t} onClick={() => act.set("lterm", t)}><span className="t">{TERM_NAME[t]}{cnt[t] ? <small>화면에 {cnt[t]}곳</small> : null}</span><Ic name="chevR" /></button>;
-  return <><div className="dw-head"><b>용어 풀이</b><span className="spacer"></span></div>
-    <div className="dw-body">
-      {ctx.length ? <><div className="dw-sub"><b>이 화면에 나온 용어</b><small>마우스를 올리면 화면에 표시돼요</small></div>{ctx.map(row)}</> : null}
-      <div className="dw-sub"><b>{ctx.length ? "다른 용어" : "전체 용어"}</b></div>{rest.map(row)}
-    </div></>;
 }
 
 function GuestState({ icon, title, body }: { icon: IconName; title: string; body: ReactNode }) {

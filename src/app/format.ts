@@ -46,3 +46,14 @@ export function useFormat(fx = FX): Fmt {
   const { krwMode } = useCurrency();
   return makeFmt(krwMode, fx);
 }
+
+/** 데이터에서 온 바깥 링크. http(s) 만 통과시키고 나머지(javascript: 등)는 undefined */
+export function safeExternalUrl(raw: string | null | undefined): string | undefined {
+  if (!raw) return undefined;
+  try {
+    const u = new URL(raw);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href : undefined;
+  } catch {
+    return undefined;
+  }
+}

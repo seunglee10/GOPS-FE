@@ -1,7 +1,8 @@
 /* 공통 틀: 상단바, 알림함, 아바타 메뉴, 본문, 오른쪽 레일, 드로어, 시트·대화상자, 토스트. 목업 gops.js mountShell(234)·renderShell(281)·render(3308)
    DOM 순서를 목업과 같게 두어 gops.css 가 그대로 먹는다 */
 import { useEffect, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../auth/AuthProvider";
 import { Ic } from "../icons";
 import { FOOTER_PAGES, SCROLL_PAGES, type PageKey } from "../nav";
 import { useActions } from "./actions";
@@ -29,10 +30,18 @@ export function usePage(page: PageKey) {
   useEffect(() => { document.body.dataset.page = page; return () => { delete document.body.dataset.page; }; }, [page]);
 }
 
+/* Google·Kakao 첫 가입은 약관 동의(needsConsent)를 마쳐야 앱을 쓴다 (계약 D39) */
+function useConsentGate() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => { if (user?.needsConsent) navigate("/google", { replace: true }); }, [user?.needsConsent, navigate]);
+}
+
 export function Shell({ page, children }: { page: PageKey; children: ReactNode }) {
   const act = useActions(page);
   const { q, setQ } = act;
   usePage(page);
+  useConsentGate();
   const bigchart = page === "stock" && q("view") === "chart";
   useEffect(() => {
     document.body.classList.toggle("wide", page === "market" || page === "stock");
