@@ -1,5 +1,5 @@
 /* 드로어(오른쪽 패널): 관심·내 투자·최근 본·용어 풀이·AI 질문. 목업 gops.js 380~505줄, 1698~1718줄, 3151~3156줄, 크기 조절 3498~3522줄 */
-import { useEffect, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Ic, type IconName } from "../icons";
 import { pct, tone, useCurrency, useFormat } from "../format";
@@ -10,6 +10,9 @@ import { useSymbolMap } from "./useSymbolMap";
 import { useWatchlist } from "../../data/hooks/useWatchlist";
 import { useAccount } from "../../data/hooks/useAccount";
 import { useRecent } from "../../data/hooks/useRecent";
+import { useDataSource } from "../../data/source";
+import { groupRecentByDay } from "../../data/api/mappers";
+import { EmptyState, ErrorState, SkeletonRows } from "./LoadState";
 import { WATCH_AI_LINE, RECENT_TODAY, RECENT_YESTERDAY } from "../../data/mock/user";
 import { Thread } from "./Thread";
 import { DrawerLearn } from "./learn/DrawerLearn";
@@ -58,12 +61,14 @@ export function CurSeg() {
 }
 const Head = ({ title, cur = true }: { title: string; cur?: boolean }) => <div className="dw-head"><b>{title}</b><span className="spacer"></span>{cur ? <CurSeg /> : null}</div>;
 
-function DwRow({ sym, extra = "" }: { sym: string; extra?: string }) {
+/* 가격은 종목 마스터(api 모드는 S&P 500 heatmap)에서 찾는다. 마스터에 없으면 이름표만 */
+function DwRow({ sym, extra = "", nameKo }: { sym: string; extra?: string; nameKo?: string | null }) {
   const syms = useSymbolMap(); const fmt = useFormat();
-  const st = syms[sym]; if (!st) return null;
+  const st = syms[sym];
+  if (!st) return <Link className="wrow" to={`/stock?s=${sym}`}><span className="sym"><Mark symbol={sym} /></span><span className="nm"><b>{nameKo || sym}</b><small>{sym}{extra}</small></span><span className="pr"></span></Link>;
   const d = st.price - st.price / (1 + st.changePercent / 100);
-  return <Link className="wrow" to={`/stock?s=${sym}`}><span className="sym"><Mark symbol={sym} color={st.color} /></span><span className="nm"><b>{st.nameKo}</b><small>{sym}{extra}</small></span>
-    <span className="pr"><b>{fmt.usd(st.price)}</b><small className={tone(st.changePercent)}>{st.changePercent >= 0 ? "+" : "-"}{fmt.usd(Math.abs(d))} ({pct(st.changePercent)})</small></span></Link>;
+  return <Link className="wrow" to={`/stock?s=${sym}`}><span className="sym"><Mark symbol={sym} color={st.color} /></span><span className="nm"><b>{st.nameKo || nameKo || sym}</b><small>{sym}{extra}</small></span>
+    {st.price > 0 ? <span className="pr"><b>{fmt.usd(st.price)}</b><small className={tone(st.changePercent)}>{st.changePercent >= 0 ? "+" : "-"}{fmt.usd(Math.abs(d))} ({pct(st.changePercent)})</small></span> : <span className="pr"></span>}</Link>;
 }
 
 function DrawerOther({ tab, act }: { tab: DwTab; act: Actions }) {
@@ -71,13 +76,18 @@ function DrawerOther({ tab, act }: { tab: DwTab; act: Actions }) {
   const watch = useWatchlist();
   const { summary } = useAccount();
   const recent = useRecent();
+  const mock = useDataSource().kind === "mock";
   if (tab === "watch") {
     const list = watch.data?.symbols ?? [];
+    const addRow = <button className="addrow" onClick={act.focusSearch}><span className="plus"><Ic name="plus" /></span>종목 검색해서 추가하기</button>;
     return <><Head title="관심" /><div className="dw-body">
-      <button className="ai-line" onClick={act.openAi}><span className="ai-lbl"><Ic name="spark" /> GOPS AI</span><span className="ai-txt">{WATCH_AI_LINE}</span><Ic name="chevR" /></button>
-      <div className="dw-sub"><b>관심 종목</b><small>{list.length}개, 별표로 추가한 순서</small></div>
-      {list.map(sym => <div key={sym} className="wrow-wrap"><DwRow sym={sym} /><button className="heart on" onClick={() => act.unwatch(sym)} aria-label={`${sym} 관심 해제`}><Ic name="heartFill" /></button></div>)}
-      <button className="addrow" onClick={act.focusSearch}><span className="plus"><Ic name="plus" /></span>종목 검색해서 추가하기</button>
+      {mock ? <button className="ai-line" onClick={act.openAi}><span className="ai-lbl"><Ic name="spark" /> GOPS AI</span><span className="ai-txt">{WATCH_AI_LINE}</span><Ic name="chevR" /></button> : null}
+      {watch.error && !watch.data ? <ErrorState title="관심 종목을 불러오지 못했어요" onRetry={watch.reload} minHeight={200} />
+        : watch.loading && !watch.data ? <SkeletonRows n={4} />
+        : !list.length ? <><EmptyState icon="heart" title="관심 종목이 아직 없어요" body="종목 화면에서 별표를 누르면 여기에 모여요." minHeight={200} />{addRow}</>
+        : <><div className="dw-sub"><b>관심 종목</b><small>{list.length}개, 별표로 추가한 순서</small></div>
+          {list.map(sym => <div key={sym} className="wrow-wrap"><DwRow sym={sym} /><button className="heart on" onClick={() => act.unwatch(sym)} aria-label={`${sym} 관심 해제`}><Ic name="heartFill" /></button></div>)}
+          {addRow}</>}
     </div></>;
   }
   if (tab === "hold") {
@@ -89,13 +99,18 @@ function DrawerOther({ tab, act }: { tab: DwTab; act: Actions }) {
       <Link className="addrow" to="/portfolio"><span className="plus"><Ic name="chevR" /></span>자산 화면에서 자세히 보기</Link>
     </div></>;
   }
-  const items = recent.data?.items.map(i => i.symbol) ?? [];
-  const today = RECENT_TODAY.filter(s => items.includes(s)), yesterday = RECENT_YESTERDAY.filter(s => items.includes(s));
-  return <><Head title="최근 본" /><div className="dw-body">
-    <div className="dw-sub"><b>오늘</b><small>본 순서대로</small></div>
-    {today.map(sym => <DwRow key={sym} sym={sym} />)}
-    <div className="dw-sub"><b>어제</b></div>
-    {yesterday.map(sym => <DwRow key={sym} sym={sym} />)}
+  const head = <Head title="최근 본" />;
+  if (recent.error && !recent.data) return <>{head}<div className="dw-body"><ErrorState title="최근 본 종목을 불러오지 못했어요" onRetry={recent.reload} minHeight={200} /></div></>;
+  if (recent.loading && !recent.data) return <>{head}<div className="dw-body"><SkeletonRows n={4} /></div></>;
+  const all = recent.data?.items ?? [];
+  if (!all.length) return <>{head}<div className="dw-body"><EmptyState icon="clock" title="최근 본 종목이 없어요" body="종목 화면을 열면 여기에 순서대로 남아요." minHeight={200} /></div></>;
+  /* 목업은 오늘·어제 목록이 정해져 있다. api 모드는 서버가 준 viewedAt 날짜로 나눈다 */
+  const groups: [string, { symbol: string; nameKo: string | null }[]][] = mock
+    ? [["오늘", RECENT_TODAY.filter(s => all.some(i => i.symbol === s)).map(s => ({ symbol: s, nameKo: null }))], ["어제", RECENT_YESTERDAY.filter(s => all.some(i => i.symbol === s)).map(s => ({ symbol: s, nameKo: null }))]]
+    : (() => { const g = groupRecentByDay(all, new Date()); return [["오늘", g.today], ["어제", g.yesterday], ["그 전", g.earlier]] as [string, typeof all][]; })();
+  return <>{head}<div className="dw-body">
+    {groups.filter(([, l]) => mock || l.length).map(([t, l], i) => <Fragment key={t}><div className="dw-sub"><b>{t}</b>{i === 0 ? <small>본 순서대로</small> : null}</div>
+      {l.map(r => <DwRow key={r.symbol} sym={r.symbol} nameKo={r.nameKo} />)}</Fragment>)}
   </div></>;
 }
 

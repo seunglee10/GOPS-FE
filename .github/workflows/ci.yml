@@ -43,6 +43,9 @@ jobs:
       - name: Run alert tests
         run: npm run test:alerts
 
+      - name: Run API mapper tests
+        run: npm run test:api
+
       - name: Build
         run: npm run build
 
