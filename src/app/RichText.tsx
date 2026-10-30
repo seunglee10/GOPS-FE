@@ -6,7 +6,20 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-const TOKEN = /\*\*([^*]+)\*\*|\[\[([A-Z0-9.]{1,10})\]\]|\[([^\]]+)\]\((\/(?!\/)[^)\s]*)\)/g;
+const TOKEN = /\*\*([^*]+)\*\*|\[\[([A-Z0-9.]{1,10})\]\]|\[([^\]]+)\]\((\/(?![\/\\])[A-Za-z0-9\-._~!$&'*+,;=:@%\/?#]*)\)/g;
+
+/** 링크 대상을 한 번 더 확인한다. 같은 출처의 경로만 통과시키고, 정규화한 경로를 돌려준다. 안 되면 null */
+export function safeInternalPath(raw: string): string | null {
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
+  try {
+    const base = "https://gops.invalid";
+    const u = new URL(raw, base);
+    if (u.origin !== base) return null;
+    return u.pathname + u.search + u.hash;
+  } catch {
+    return null;
+  }
+}
 
 export function parseRich(text: string): ReactNode[] {
   const out: ReactNode[] = []; let last = 0, k = 0;
@@ -14,7 +27,10 @@ export function parseRich(text: string): ReactNode[] {
     if (m.index! > last) out.push(text.slice(last, m.index));
     if (m[1] != null) out.push(<b key={k++}>{m[1]}</b>);
     else if (m[2] != null) out.push(<Link key={k++} to={`/stock?s=${m[2]}`}>{m[2]}</Link>);
-    else out.push(<Link key={k++} to={m[4]}>{m[3]}</Link>);
+    else {
+      const to = safeInternalPath(m[4]);
+      out.push(to ? <Link key={k++} to={to}>{m[3]}</Link> : m[0]);
+    }
     last = m.index! + m[0].length;
   }
   if (last < text.length) out.push(text.slice(last));
