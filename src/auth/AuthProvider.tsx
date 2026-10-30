@@ -38,7 +38,7 @@ type AuthContextValue = {
   login: () => void;
   /** 특정 제공자의 동의 화면으로 바로 넘긴다. 로그인 페이지에서만 쓴다. */
   loginWith: (provider: AuthProviderId, returnTo?: string) => void;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   refresh: () => Promise<AuthUser | null>;
   email: EmailAuthActions;
 };
@@ -49,11 +49,14 @@ export const LOGIN_PATH = "/login";
 
 /** 같은 출처의 경로만 통과시킨다. `//evil.com`은 브라우저가 외부로 읽는다. */
 export function safeReturnTo(value: string | null | undefined): string {
-  const trimmed = value?.trim() ?? "";
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.startsWith("/\\") || trimmed.startsWith(LOGIN_PATH)) {
-    return "/";
-  }
-  return trimmed;
+  // 브라우저는 URL 안의 탭·줄바꿈을 지우고 읽는다. 검사도 지운 뒤에 한다.
+  const raw = (value ?? "").replace(/[\t\n\r]/g, "").trim();
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "/";
+  const base = "https://gops.invalid";
+  let url: URL;
+  try { url = new URL(raw, base); } catch { return "/"; }
+  if (url.origin !== base || url.pathname === LOGIN_PATH || url.pathname.startsWith(`${LOGIN_PATH}/`)) return "/";
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 /**
@@ -122,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    if (mock) { prefs.guest.set(true); return; }
+    if (mock) { prefs.guest.set(true); prefs.exp.set(null); return true; }
     setLoading(true);
     setError(undefined);
     try {
@@ -131,8 +134,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(`로그아웃 API 응답 오류 ${response.status}`);
       }
       setUser(null);
+      prefs.exp.set(null);
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "로그아웃에 실패했습니다.");
+      return false;
     } finally {
       setLoading(false);
     }

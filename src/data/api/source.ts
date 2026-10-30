@@ -100,7 +100,9 @@ export const apiSource: DataSource = {
     const user = readObject(readObject(await getJson("/api/auth/me"))?.user) ?? {};
     const exp = asString(user.experience);
     const email = asString(user.email) ?? null;
-    return { name: asString(user.name) ?? email?.split("@")[0] ?? "", email, initials: "SL", experience: exp === "new" || exp === "some" || exp === "pro" ? exp : prefs.exp.get() };
+    const owner = email ?? asString(user.sub) ?? null;
+    if (owner && prefs.expOwner.get() !== owner) { prefs.exp.set(null); prefs.expOwner.set(owner); }
+    return { name: asString(user.name) ?? email?.split("@")[0] ?? "", email, initials: "SL", experience: exp === "new" || exp === "some" || exp === "pro" ? exp : (owner ? prefs.exp.get() : null) };
   },
   async putProfile(patch) {
     if ("experience" in patch) prefs.exp.set(patch.experience ?? null);

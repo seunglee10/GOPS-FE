@@ -79,6 +79,11 @@ import { safeReturnTo } from "../src/auth/AuthProvider";
 {
   assert.equal(safeReturnTo("/stock?s=NVDA"), "/stock?s=NVDA");
   assert.equal(safeReturnTo("//evil.com"), "/");
+  assert.equal(safeReturnTo("/\t/evil.com"), "/");
+  assert.equal(safeReturnTo("/\n//evil.com"), "/");
+  assert.equal(safeReturnTo("/\t\\evil.com"), "/");
+  assert.equal(safeReturnTo("/login?next=/x"), "/");
+  assert.equal(safeReturnTo("/news?n=3#top"), "/news?n=3#top");
   assert.equal(safeReturnTo("/\\evil.com"), "/");
   assert.equal(safeReturnTo("https://evil.com"), "/");
   assert.equal(safeReturnTo("/login?next=/"), "/");
