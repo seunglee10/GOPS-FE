@@ -2,10 +2,11 @@
    같은 종목·주기면 늘 같은 값이 나와야 화면이 목업과 같다. 숫자 하나도 바꾸지 말 것. */
 import type { Candle } from "../../api/types";
 import { S } from "./symbols";
+import { rng } from "../../charts/format";
+import { CX_IV, seriesOf } from "../../charts/indicators";
+import type { Interval } from "../../charts/types";
 
-export function rng(a: number): () => number {
-  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-}
+export { rng };
 /* NVDA는 대화와 규칙에 나오는 숫자(지지 137.70, 저항 150, 거래량 2.1배)에 맞춰 고정 */
 export const SUP = 137.70, RES = 150;
 export const r2 = (v: number): number => Math.round(v * 100) / 100;
@@ -57,7 +58,7 @@ export function swingOf(s: string): { typical: number; worst: number; best: numb
 }
 
 /* ---------- 차트 모듈 데이터: 일봉 2016년부터, 분봉 5일, 묶음 주기 ---------- */
-export const CX_IV: Record<string, [label: string, minutes: number]> = { "1m": ["1분", 1], "3m": ["3분", 3], "5m": ["5분", 5], "10m": ["10분", 10], "15m": ["15분", 15], "30m": ["30분", 30], "60m": ["60분", 60], D: ["일", 0], W: ["주", 0], M: ["월", 0], Y: ["년", 0] };
+export { CX_IV };   // 주기 표는 차트 모듈(src/charts/indicators.ts)이 원본
 export const VOL_K = 1e6;   // candlesOf 거래량 1 = 100만 주
 const CX_CACHE: Record<string, Candle[]> = {};
 /* 투자자별 흐름(가짜): 공매도는 거래량의 18~40%, 기관·외국인은 그날 등락과 조금 같은 방향, 개인은 둘의 반대 */
@@ -102,64 +103,18 @@ export function cxMinute(s: string): Candle[] {
   });
   return CX_CACHE[key] = out;
 }
-export function cxAgg(rows: Candle[], keyOf: (t: Date) => string | number): Candle[] {
-  const out: Candle[] = []; let cur: Candle | null = null, k0: string | number | null = null;
-  for (const x of rows) {
-    const k = keyOf(x.t);
-    if (k !== k0) { cur = { t: x.t, o: x.o, h: x.h, l: x.l, c: x.c, v: 0, short: 0, inst: 0, foreign: 0, retail: 0 }; out.push(cur); k0 = k; }
-    const c = cur!;
-    c.h = Math.max(c.h, x.h); c.l = Math.min(c.l, x.l); c.c = x.c; c.v += x.v;
-    c.short! += x.short || 0; c.inst! += x.inst || 0; c.foreign! += x.foreign || 0; c.retail! += x.retail || 0;
-  }
-  return out;
-}
-const cxWeekKey = (t: Date): string => { const m = new Date(t); m.setDate(t.getDate() - (t.getDay() + 6) % 7); return m.toDateString(); };
+/* 묶음 주기(3분·5분·주·월·년)와 하이킨아시·렌코·카기 변환은 차트 모듈(src/charts/indicators.ts seriesOf·plotBars)이 맡는다.
+   여기서는 일봉·1분봉 생성만 하고, 묶음은 캐시해 둔다 */
+const SERIES_CACHE: Record<string, Candle[]> = {};
 export function cxSeries(s: string, iv: string): Candle[] {
   if (iv === "D") return cxDaily(s);
   if (iv === "1m") return cxMinute(s);
-  const k = s + ":" + iv; if (CX_CACHE[k]) return CX_CACHE[k];
-  const n = CX_IV[iv][1];
-  if (n) return CX_CACHE[k] = cxAgg(cxMinute(s), t => t.toDateString() + Math.floor(((t.getHours() - 9) * 60 + t.getMinutes() - 30) / n));
-  return CX_CACHE[k] = cxAgg(cxDaily(s), iv === "W" ? cxWeekKey : iv === "M" ? t => t.getFullYear() * 12 + t.getMonth() : t => t.getFullYear());
+  const k = s + ":" + iv; if (SERIES_CACHE[k]) return SERIES_CACHE[k];
+  const intra = CX_IV[iv as Interval][1] > 0;
+  return SERIES_CACHE[k] = seriesOf(iv as Interval, cxDaily(s), intra ? cxMinute(s) : []);
 }
 /* 실시간 가격이 움직이면 일봉·1분봉 마지막 막대에 반영하고, 그걸로 묶은 주기는 다시 묶게 지운다 */
 export function cxLive(s: string, price: number): void {
   for (const k of [s + ":D", s + ":1m"]) { const A = CX_CACHE[k]; if (!A) continue; const b = A[A.length - 1]; b.c = price; b.h = Math.max(b.h, price); b.l = Math.min(b.l, price); }
-  Object.keys(CX_CACHE).forEach(k => { if (k.startsWith(s + ":") && !k.endsWith(":D") && !k.endsWith(":1m")) delete CX_CACHE[k]; });
+  Object.keys(SERIES_CACHE).forEach(k => { if (k.startsWith(s + ":")) delete SERIES_CACHE[k]; });
 }
-export const cxAtr = (A: Candle[], n = 14): number => { const B = A.slice(-n - 1); let a = 0; for (let i = 1; i < B.length; i++) a += Math.max(B[i].h - B[i].l, Math.abs(B[i].h - B[i - 1].c), Math.abs(B[i].l - B[i - 1].c)); return a / Math.max(1, B.length - 1); };
-
-export type BarType = "candle" | "hollow" | "bar" | "line" | "area" | "heikin" | "renko" | "kagi";
-export type KagiBar = Candle & { up: boolean; yang: boolean };
-/* 지금 모양으로 그릴 막대. 하이킨아시는 평균 낸 캔들, 렌코·카기는 시간 대신 가격이 일정 폭 움직일 때마다 한 칸.
-   목업은 CHS.iv/CHS.type 전역을 읽었는데 여기서는 인수로 받는다. 렌코·카기의 칸 폭(box)은 두 번째 값으로 돌려준다 */
-export function cxBars(s: string, iv: string, type: BarType): { bars: Candle[]; box: number | null } {
-  const base = cxSeries(s, iv);
-  if (type === "heikin") {
-    const out: Candle[] = [];
-    base.forEach((x, i) => { const c = (x.o + x.h + x.l + x.c) / 4, o = i ? (out[i - 1].o + out[i - 1].c) / 2 : (x.o + x.c) / 2; out.push({ ...x, o, c, h: Math.max(x.h, o, c), l: Math.min(x.l, o, c) }); });
-    return { bars: out, box: null };
-  }
-  if (type !== "renko" && type !== "kagi") return { bars: base, box: null };
-  const B = base.slice(-400), box = cxAtr(B), out: Candle[] = [];
-  if (type === "renko") {
-    let top = B[0].c, bot = B[0].c;
-    for (const x of B) {
-      while (x.c >= top + box) { out.push({ t: x.t, o: top, c: top + box, h: top + box, l: top, v: x.v }); bot = top; top += box; }
-      while (x.c <= bot - box) { out.push({ t: x.t, o: bot, c: bot - box, h: bot, l: bot - box, v: x.v }); top = bot; bot -= box; }
-    }
-    return { bars: out, box };
-  }
-  // 카기: 반대로 box만큼 움직이면 방향을 바꾼다. 앞 고점을 넘으면 굵은 선(양), 앞 저점을 깨면 가는 선(음)
-  let dir = 0, start = B[0].c, ext = B[0].c, yang = true, lastHi = -Infinity, lastLo = Infinity;
-  const push = (t: Date, up: boolean) => { if (up && ext > lastHi) yang = true; if (!up && ext < lastLo) yang = false; const bar: KagiBar = { t, o: start, c: ext, h: Math.max(start, ext), l: Math.min(start, ext), v: 0, up, yang }; out.push(bar); if (up) lastHi = ext; else lastLo = ext; start = ext; };
-  for (const x of B) {
-    if (dir >= 0 && x.c > ext && (dir || x.c >= ext + box)) { ext = x.c; dir = 1; }
-    else if (dir <= 0 && x.c < ext && (dir || x.c <= ext - box)) { ext = x.c; dir = -1; }
-    else if (dir === 1 && x.c <= ext - box) { push(x.t, true); ext = x.c; dir = -1; }
-    else if (dir === -1 && x.c >= ext + box) { push(x.t, false); ext = x.c; dir = 1; }
-  }
-  if (dir) push(B[B.length - 1].t, dir > 0);
-  return { bars: out, box };
-}
-export const cxSma = (A: number[], n: number): (number | null)[] => { const out: (number | null)[] = new Array(A.length).fill(null); let s = 0; for (let i = 0; i < A.length; i++) { s += A[i]; if (i >= n) s -= A[i - n]; if (i >= n - 1) out[i] = s / n; } return out; };

@@ -45,7 +45,7 @@ export const PROGRESS_NOW = 2;   // 세 번째 줄이 진행 중
 export const FIXED_THREAD: AgentMessage[] = [
   { role: "user", text: "오늘 거래량이 왜 이렇게 늘었어?", at: "오늘 09:44", ctx: ["NVDA", "9/30 캔들"] },
   { role: "assistant", view: {
-    conclusion: "9월 30일 거래량이 20일 평균의 <b>2.1배</b>로 늘었어요. 차세대 GPU 출하가 앞당겨진다는 보고서에 매수가 몰렸어요.",
+    conclusion: "9월 30일 거래량이 20일 평균의 **2.1배**로 늘었어요. 차세대 GPU 출하가 앞당겨진다는 보고서에 매수가 몰렸어요.",
     sections: [
       { title: "왜 늘었나", body: "장 시작 전 나온 공급망 보고서가 출하 시점을 한 분기 앞당겨 전했어요. 같은 날 반도체 대형주 거래도 함께 늘었어요.", evidence: [{ kind: "news", ref: "news", label: "뉴스 3건" }] },
       { title: "가격 위치", body: null, evidence: [{ kind: "chart", ref: "chart", label: "9/30 캔들" }], kv: [{ k: "지지선", v: `$${SUP.toFixed(2)}`, sub: "여기서 반등" }, { k: "52주 고점까지", v: "1.5%" }, { k: "다음 저항선", v: `$${RES.toFixed(2)}` }] },

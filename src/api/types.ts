@@ -200,6 +200,7 @@ export type AgentSuggestion =
   | { kind: "rule"; label: string; payload: { symbol: string; price: number; dir?: "above" | "below" } }
   | { kind: "compare"; label: string; symbols: string[] };
 export type AgentView = {
+  /** 글만. 굵게는 **...** 로 (RichText). HTML 을 넣지 않는다 */
   conclusion: string;
   sections: { title: string; body: string | null; evidence: AgentEvidence[]; kv?: { k: string; v: string; sub?: string }[] }[];
   steps: string[];

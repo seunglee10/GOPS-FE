@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Ic, type IconName } from "../icons";
 import { useFormat } from "../format";
+import { RichText } from "../RichText";
 import type { PageKey } from "../nav";
 import { useAgentChat } from "../../data/hooks/useAgentChat";
 import { EXAMPLES, PROGRESS_STEPS, PROGRESS_NOW, STOP_TOAST, SUGGESTION_DESC, suggestions, type Suggestion } from "../../data/mock/ai";
@@ -19,7 +20,6 @@ export function contextChips(page: PageKey, q: (k: string) => string | null): st
 export function Thread({ page, act }: { page: PageKey; act: Actions }) {
   const { q, setQ, ag } = act;
   const a = ag() || "new";
-  const fmt = useFormat();
   const chat = useAgentChat();
   const ctx = page === "stock" ? (q("s") || "NVDA").toUpperCase() : "NVDA";
   const [value, setValue] = useState(q("ask") ?? "");
@@ -104,7 +104,6 @@ export function Thread({ page, act }: { page: PageKey; act: Actions }) {
         onChange={e => { setValue(e.target.value); setSel(0); if (ask != null) setQ({ ask: null }); }} onFocus={() => setFocused(true)} onBlur={() => setTimeout(() => setFocused(false), 150)} onKeyDown={onKey} />
         <button className={`send ${loading ? "stop" : ""}`} id="sendbtn" onClick={send} aria-label={loading ? "답변 중단" : "보내기"}><Ic name={loading ? "stop" : "send"} /></button></div>
     </div>
-    <span hidden>{fmt.krwMode ? "" : ""}</span>
   </>;
 }
 
@@ -120,11 +119,11 @@ function Suggest({ list, sel, onPick }: { list: Suggestion[]; sel: number; onPic
 function Answer({ view, act }: { view: AgentView; act: Actions }) {
   const fmt = useFormat();
   return <article className="ans">
-    <p className="ans-lead" dangerouslySetInnerHTML={{ __html: fmt.t(view.conclusion) }} />
+    <p className="ans-lead"><RichText text={fmt.t(view.conclusion)} /></p>
     {view.sections.map(sec => <section key={sec.title} className="ans-sec">
       <div className="ans-h"><h5>{sec.title}</h5>{sec.evidence.map(e => <button key={e.ref} className="src" onClick={() => act.ref(e.kind)}>{e.label}</button>)}</div>
       {sec.kv ? <dl className="ans-kv">{sec.kv.map(r => <div key={r.k}><dt>{r.k}</dt><dd>{fmt.t(r.v)}{r.sub ? <small>{r.sub}</small> : null}</dd></div>)}</dl> : null}
-      {sec.body ? <p>{sec.body}</p> : null}
+      {sec.body ? <p><RichText text={fmt.t(sec.body)} /></p> : null}
     </section>)}
     <details className="ans-steps"><summary><span className="conf"></span>근거 {view.evidenceCount}곳, 확신 {view.confidence}<span className="spacer"></span>확인 과정</summary>
       <ol>{view.steps.map(s => <li key={s}>{s}</li>)}</ol></details>
