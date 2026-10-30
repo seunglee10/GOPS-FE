@@ -1,6 +1,6 @@
 /* 목업 gops.js 3326~3454줄의 data-act 이벤트 위임을 훅 하나로. 컴포넌트는 여기 있는 함수를 onClick 에 건다.
    로그아웃 상태에서 NEED 목록의 행동은 로그인 안내 대화상자로 보낸다 (3332~3333줄) */
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQ } from "../query";
 import { useSession } from "../session";
@@ -40,11 +40,29 @@ export function useActions(page: PageKey) {
   /* 목업 starSet(): ?star= 가 있으면 그 목록, 없으면 관심 종목 */
   const starSet = useCallback((): Set<string> => {
     if (guest) return new Set();
-    const v = q("star");
+    const v = dataSourceKind() === "api" ? null : q("star");   // ?star= 는 목업 흉내. api 모드는 서버 목록만 본다
     return new Set(v == null ? (watch.data?.symbols ?? []) : v.split(",").filter(Boolean));
   }, [guest, q, watch.data]);
 
   const go = useCallback((href: string) => navigate(href), [navigate]);
+
+  /* 종목 이름 + 목적격 조사 ("엔비디아를", "애플을", 이름을 모르면 "NVDA를") */
+  const objName = useCallback((s: string) => {
+    const ko = syms[s]?.nameKo; if (!ko) return s + "를";
+    const last = ko.charCodeAt(ko.length - 1) - 0xac00;
+    return ko + (last >= 0 && last < 11172 && last % 28 ? "을" : "를");
+  }, [syms]);
+
+  /* api 모드 관심 종목 쓰기 (D17). want=null 이면 뒤집기. 실행 취소는 반대로 한 번 더 쓴다. 실패하면 오류 토스트에서 다시 시도 */
+  const watchRef = useRef(watch); watchRef.current = watch;
+  const watchWrite = useCallback((s: string, want: boolean | null) => {
+    const w = watchRef.current;
+    const run = want == null ? w.toggle(s) : want ? w.add(s) : w.remove(s);
+    run.then(on => toast(on ? `${objName(s)} 관심 종목에 추가했어요.` : `${objName(s)} 관심 종목에서 뺐어요.`, {
+      action: "실행 취소",
+      undo: () => { void (on ? watchRef.current.remove(s) : watchRef.current.add(s)).catch(() => toast("관심 종목을 바꾸지 못했어요.", { error: true })); },
+    }), () => toast("관심 종목을 바꾸지 못했어요.", { error: true, action: "다시 시도", undo: () => watchWrite(s, want) }));
+  }, [toast, objName]);
 
   return useMemo(() => ({
     q, setQ, dw, ag, go, requireLogin, starSet, guest,
@@ -109,13 +127,18 @@ export function useActions(page: PageKey) {
     guard(k: string, on: boolean) { if (requireLogin("guard")) return; setQ({ [k]: on ? "0" : "1" }); toast("가드레일을 저장했어요. 다음 주문부터 적용돼요."); },
     star(s: string) {
       if (requireLogin("star")) return;
+      if (dataSourceKind() === "api") { watchWrite(s, null); return; }
       const st = starSet(), had = st.has(s); if (had) st.delete(s); else st.add(s);
       setQ({ star: [...st].join(",") });
       const ko = syms[s]?.nameKo; const kr = !syms[s] && ko;
       const nm = kr ? ko + (/[가-힣]/.test(ko.slice(-1)) && (ko.slice(-1).charCodeAt(0) - 0xac00) % 28 ? "을" : "를") : s + "를";
       toast(had ? `${nm} 관심 종목에서 뺐어요.` : `${nm} 관심 종목에 추가했어요.`, { action: "실행 취소", undo: () => { if (had) st.add(s); else st.delete(s); setQ({ star: [...st].join(",") }); } });
     },
-    unwatch(s: string) { if (requireLogin("unwatch")) return; toast(`${s}를 관심 종목에서 뺐어요.`, { action: "실행 취소" }); },
+    unwatch(s: string) {
+      if (requireLogin("unwatch")) return;
+      if (dataSourceKind() === "api") { watchWrite(s, false); return; }
+      toast(`${s}를 관심 종목에서 뺐어요.`, { action: "실행 취소" });
+    },
     toastClose() { clear(); setQ({ toast: null }); },
     toastAct() {
       const t = toasts[0]; clear();
@@ -125,6 +148,6 @@ export function useActions(page: PageKey) {
       else setQ({ toast: null });
     },
     toast,
-  }), [q, setQ, go, requireLogin, starSet, guest, dw, ag, page, toast, toasts, clear, syms, auth]);
+  }), [q, setQ, go, requireLogin, starSet, guest, dw, ag, page, toast, toasts, clear, syms, auth, watchWrite]);
 }
 export type Actions = ReturnType<typeof useActions>;
