@@ -30,7 +30,70 @@ export type AgentAnalysisRequestOptions = {
   requestId?: string;
   signal?: AbortSignal;
   onAccepted?: (accepted: AgentAnalysisAccepted) => void;
+  /** 답변 요약 문장이 생성되는 대로 호출된다. text는 지금까지 받은 전체 문장이다. */
+  onDelta?: (text: string) => void;
 };
+
+export type AgentAnalysisDelta = { analysisId: string; seq: number; text: string };
+
+/**
+ * delta 이벤트를 seq 순서대로 이어 붙인다. 이미 받은 seq 이하(중복·재전송)와 건너뛴 seq는 버린다.
+ * 건너뛰면 문장이 끊기므로 멈추고, 최종 report가 오면 화면이 그 값으로 교체된다.
+ */
+const AGENT_DELTA_MAX_CHUNK_CHARS = 4096;
+const AGENT_DELTA_MAX_TOTAL_CHARS = 32768;
+
+export function createAgentDeltaAccumulator() {
+  let lastSeq = 0;
+  let text = "";
+  let broken = false;
+  return {
+    push(delta: AgentAnalysisDelta): string | null {
+      if (broken || delta.seq <= lastSeq) {
+        return null;
+      }
+      // 한 조각이나 누적 길이가 비정상적으로 크면 멈춘다. 최종 report가 전체 답변을 가져온다.
+      if (
+        delta.seq !== lastSeq + 1
+        || delta.text.length > AGENT_DELTA_MAX_CHUNK_CHARS
+        || text.length + delta.text.length > AGENT_DELTA_MAX_TOTAL_CHARS
+      ) {
+        broken = true;
+        return null;
+      }
+      lastSeq = delta.seq;
+      text += delta.text;
+      return text;
+    }
+  };
+}
+
+/** 헤더 한 줄에 맞게, 스트리밍 중인 문장의 가장 최근 부분만 보여 준다. */
+export function agentDeltaPreview(text: string, maxChars = 64): string {
+  // 전체를 훑지 않고 뒤쪽 구간만 정리한다. 자르다 생긴 짝 없는 서로게이트는 아래에서 함께 걸러진다.
+  const tail = text.slice(-maxChars * 4);
+  // 제어(Cc)·서식(Cf, 양방향 제어·폭 없는 문자·태그 문자 포함)·서로게이트 조각(Cs)·사용자 정의(Co)·미할당(Cn)과
+  // 글자처럼 보이지 않는 채움 문자(한글 채움 U+115F U+1160 U+3164, 점자 빈칸 U+2800)는 공백으로 바꿔 단어 경계를 유지한다.
+  const flat = tail
+    .replace(/[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\u115f\u1160\u3164\u2800]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  // 코드 포인트 단위로 자른다. 코드 단위로 자르면 서로게이트 쌍이 쪼개져 잘못된 UTF-16이 남는다.
+  const chars = Array.from(flat);
+  return chars.length > maxChars ? `…${chars.slice(chars.length - maxChars + 1).join("")}` : flat;
+}
+
+export function parseAgentDelta(data: string): AgentAnalysisDelta | null {
+  try {
+    const value = JSON.parse(data) as Record<string, unknown>;
+    if (typeof value.analysisId === "string" && typeof value.seq === "number" && typeof value.text === "string") {
+      return { analysisId: value.analysisId, seq: value.seq, text: value.text };
+    }
+  } catch {
+    // 잘못된 delta는 무시한다. 최종 report가 전체 답변을 가져온다.
+  }
+  return null;
+}
 
 export type AgentEntityResolveStatus = "confirmed" | "not_found" | "ambiguous" | "unsupported";
 
@@ -89,7 +152,7 @@ export async function requestAgentAnalysisPayload(payload: unknown, options: Age
   if (accepted) {
     options.onAccepted?.(accepted);
   }
-  return waitForAgentAnalysisReport(responsePayload, options.signal);
+  return waitForAgentAnalysisReport(responsePayload, options.signal, options.onDelta);
 }
 
 export function formatAgentAnalysisForChat(report: AgentAnalysisReport): string {
@@ -217,7 +280,7 @@ function normalizeIntentRoute(value: unknown): IntentRoute | null {
   };
 }
 
-async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal): Promise<AgentAnalysisReport> {
+async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal, onDelta?: (text: string) => void): Promise<AgentAnalysisReport> {
   throwIfAborted(signal);
   let report = normalizeAgentAnalysisPayload(payload);
   if (isTerminalAgentReport(report)) {
@@ -227,7 +290,7 @@ async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal
   const streamUrl = resolveAgentReportStreamUrl(payload);
   if (streamUrl && typeof EventSource !== "undefined") {
     try {
-      return await waitForAgentAnalysisReportStream(streamUrl, signal);
+      return await waitForAgentAnalysisReportStream(streamUrl, signal, onDelta);
     } catch (error) {
       if (isAgentRequestAbortError(error)) {
         throw error;
@@ -255,7 +318,7 @@ async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal
   throw new Error("AI 분석 결과를 제한 시간 안에 받지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }
 
-function waitForAgentAnalysisReportStream(streamUrl: string, signal?: AbortSignal): Promise<AgentAnalysisReport> {
+function waitForAgentAnalysisReportStream(streamUrl: string, signal?: AbortSignal, onDelta?: (text: string) => void): Promise<AgentAnalysisReport> {
   return new Promise((resolve, reject) => {
     throwIfAborted(signal);
     const source = new EventSource(streamUrl);
@@ -280,6 +343,14 @@ function waitForAgentAnalysisReportStream(streamUrl: string, signal?: AbortSigna
     };
     signal?.addEventListener("abort", handleAbort, { once: true });
 
+    const deltas = createAgentDeltaAccumulator();
+    source.addEventListener("delta", (event) => {
+      const delta = parseAgentDelta((event as MessageEvent<string>).data);
+      const text = delta ? deltas.push(delta) : null;
+      if (text !== null) {
+        onDelta?.(text);
+      }
+    });
     source.addEventListener("report", (event) => {
       try {
         const report = normalizeAgentAnalysisPayload(JSON.parse(event.data) as unknown);

@@ -30,6 +30,7 @@ import {
   cancelAgentAnalysis,
   createAgentAnalysisRequestId,
   isAgentRequestAbortError,
+  agentDeltaPreview,
   requestAgentAnalysisPayload,
   resolveAgentChartShortcut,
   resolveAgentLayoutCommand,
@@ -1769,6 +1770,7 @@ export function App() {
         const report = await requestAgentAnalysisPayload(analysisRequestPayload, {
           requestId,
           signal: controller.signal,
+          onDelta: (text) => showAgentNotice(agentDeltaPreview(text), "info"),
           onAccepted: (accepted) => {
             activeRun.requestId = accepted.analysisId;
             if (commentarySource && opensChartCommentary) {
