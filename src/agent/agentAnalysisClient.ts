@@ -70,16 +70,17 @@ export function createAgentDeltaAccumulator() {
 
 /** 헤더 한 줄에 맞게, 스트리밍 중인 문장의 가장 최근 부분만 보여 준다. */
 export function agentDeltaPreview(text: string, maxChars = 64): string {
-  // 전체를 훑지 않고 뒤쪽 구간만 정리한다.
+  // 전체를 훑지 않고 뒤쪽 구간만 정리한다. 자르다 생긴 짝 없는 서로게이트는 아래에서 함께 걸러진다.
   const tail = text.slice(-maxChars * 4);
-  // 제어문자(Cc)는 공백으로, 서식·서로게이트 조각·사용자 정의·미할당(Cf, Cs, Co, Cn)은 지운다.
-  // Cf에는 양방향 제어, 폭 없는 문자, 태그 문자가 들어 있다. tail을 자르다 생긴 짝 없는 서로게이트도 Cs로 걸린다.
+  // 제어(Cc)·서식(Cf, 양방향 제어·폭 없는 문자·태그 문자 포함)·서로게이트 조각(Cs)·사용자 정의(Co)·미할당(Cn)과
+  // 글자처럼 보이지 않는 채움 문자(한글 채움 U+115F U+1160 U+3164, 점자 빈칸 U+2800)는 공백으로 바꿔 단어 경계를 유지한다.
   const flat = tail
-    .replace(/\p{Cc}/gu, " ")
-    .replace(/[\p{Cf}\p{Cs}\p{Co}\p{Cn}]/gu, "")
+    .replace(/[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\u115f\u1160\u3164\u2800]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
-  return flat.length > maxChars ? `…${flat.slice(flat.length - maxChars + 1)}` : flat;
+  // 코드 포인트 단위로 자른다. 코드 단위로 자르면 서로게이트 쌍이 쪼개져 잘못된 UTF-16이 남는다.
+  const chars = Array.from(flat);
+  return chars.length > maxChars ? `…${chars.slice(chars.length - maxChars + 1).join("")}` : flat;
 }
 
 export function parseAgentDelta(data: string): AgentAnalysisDelta | null {

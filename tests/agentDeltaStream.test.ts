@@ -174,11 +174,23 @@ test("oversized or runaway delta streams stop accumulating", () => {
 test("preview strips control and bidi characters", () => {
   const preview = agentDeltaPreview("정상\u202e문장\u0007\u200b끝");
   assert.ok(!/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/.test(preview));
-  assert.equal(preview, "정상문장 끝"); // 서식 문자는 삭제, 제어문자(BEL)는 공백
+  assert.equal(preview, "정상 문장 끝");
 });
 
 test("preview strips unicode format characters beyond the common bidi set", () => {
   // U+061C(아랍 문자 표시), U+2060(단어 결합자), U+E0041(태그 문자), 짝 없는 서로게이트
   const preview = agentDeltaPreview("가\u061c나\u2060다\u{E0041}라\ud800마");
-  assert.equal(preview, "가나다라마");
+  assert.equal(preview, "가 나 다 라 마");
+});
+
+test("preview never leaves a lone surrogate when truncating emoji-heavy text", () => {
+  for (let max = 3; max < 12; max += 1) {
+    const preview = agentDeltaPreview("😀".repeat(40), max);
+    assert.ok(!/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(preview), `max=${max}`);
+    assert.equal(Array.from(preview).length, max);
+  }
+});
+
+test("preview turns invisible filler characters into spaces", () => {
+  assert.equal(agentDeltaPreview("가\u3164나\u2800다"), "가 나 다");
 });
