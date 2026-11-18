@@ -157,3 +157,22 @@ test("preview keeps the latest part of a long sentence on one line", () => {
   assert.equal(preview.length, 20);
   assert.ok(preview.startsWith("…"));
 });
+
+test("oversized or runaway delta streams stop accumulating", () => {
+  const huge = createAgentDeltaAccumulator();
+  assert.equal(huge.push(delta(1, "가".repeat(5000))), null);
+  assert.equal(huge.push(delta(2, "나")), null);
+
+  const runaway = createAgentDeltaAccumulator();
+  let last: string | null = "";
+  for (let seq = 1; seq <= 12; seq += 1) {
+    last = runaway.push(delta(seq, "가".repeat(4000)));
+  }
+  assert.equal(last, null);
+});
+
+test("preview strips control and bidi characters", () => {
+  const preview = agentDeltaPreview("정상\u202e문장\u0007\u200b끝");
+  assert.ok(!/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/.test(preview));
+  assert.equal(preview, "정상 문장 끝");
+});

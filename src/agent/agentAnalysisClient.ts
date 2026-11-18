@@ -40,6 +40,9 @@ export type AgentAnalysisDelta = { analysisId: string; seq: number; text: string
  * delta 이벤트를 seq 순서대로 이어 붙인다. 이미 받은 seq 이하(중복·재전송)와 건너뛴 seq는 버린다.
  * 건너뛰면 문장이 끊기므로 멈추고, 최종 report가 오면 화면이 그 값으로 교체된다.
  */
+const AGENT_DELTA_MAX_CHUNK_CHARS = 4096;
+const AGENT_DELTA_MAX_TOTAL_CHARS = 32768;
+
 export function createAgentDeltaAccumulator() {
   let lastSeq = 0;
   let text = "";
@@ -49,7 +52,12 @@ export function createAgentDeltaAccumulator() {
       if (broken || delta.seq <= lastSeq) {
         return null;
       }
-      if (delta.seq !== lastSeq + 1) {
+      // 한 조각이나 누적 길이가 비정상적으로 크면 멈춘다. 최종 report가 전체 답변을 가져온다.
+      if (
+        delta.seq !== lastSeq + 1
+        || delta.text.length > AGENT_DELTA_MAX_CHUNK_CHARS
+        || text.length + delta.text.length > AGENT_DELTA_MAX_TOTAL_CHARS
+      ) {
         broken = true;
         return null;
       }
@@ -62,7 +70,9 @@ export function createAgentDeltaAccumulator() {
 
 /** 헤더 한 줄에 맞게, 스트리밍 중인 문장의 가장 최근 부분만 보여 준다. */
 export function agentDeltaPreview(text: string, maxChars = 64): string {
-  const flat = text.replace(/\s+/g, " ").trim();
+  // 전체를 훑지 않고 뒤쪽 구간만 정리한다. 제어문자·양방향 제어·폭 없는 문자는 헤더에 보이지 않게 제거한다.
+  const tail = text.slice(-maxChars * 4);
+  const flat = tail.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, " ").replace(/\s+/g, " ").trim();
   return flat.length > maxChars ? `…${flat.slice(flat.length - maxChars + 1)}` : flat;
 }
 
