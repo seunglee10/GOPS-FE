@@ -70,9 +70,15 @@ export function createAgentDeltaAccumulator() {
 
 /** 헤더 한 줄에 맞게, 스트리밍 중인 문장의 가장 최근 부분만 보여 준다. */
 export function agentDeltaPreview(text: string, maxChars = 64): string {
-  // 전체를 훑지 않고 뒤쪽 구간만 정리한다. 제어문자·양방향 제어·폭 없는 문자는 헤더에 보이지 않게 제거한다.
+  // 전체를 훑지 않고 뒤쪽 구간만 정리한다.
   const tail = text.slice(-maxChars * 4);
-  const flat = tail.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, " ").replace(/\s+/g, " ").trim();
+  // 제어문자(Cc)는 공백으로, 서식·서로게이트 조각·사용자 정의·미할당(Cf, Cs, Co, Cn)은 지운다.
+  // Cf에는 양방향 제어, 폭 없는 문자, 태그 문자가 들어 있다. tail을 자르다 생긴 짝 없는 서로게이트도 Cs로 걸린다.
+  const flat = tail
+    .replace(/\p{Cc}/gu, " ")
+    .replace(/[\p{Cf}\p{Cs}\p{Co}\p{Cn}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
   return flat.length > maxChars ? `…${flat.slice(flat.length - maxChars + 1)}` : flat;
 }
 
