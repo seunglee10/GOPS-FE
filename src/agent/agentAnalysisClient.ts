@@ -30,7 +30,53 @@ export type AgentAnalysisRequestOptions = {
   requestId?: string;
   signal?: AbortSignal;
   onAccepted?: (accepted: AgentAnalysisAccepted) => void;
+  /** 답변 요약 문장이 생성되는 대로 호출된다. text는 지금까지 받은 전체 문장이다. */
+  onDelta?: (text: string) => void;
 };
+
+export type AgentAnalysisDelta = { analysisId: string; seq: number; text: string };
+
+/**
+ * delta 이벤트를 seq 순서대로 이어 붙인다. 이미 받은 seq 이하(중복·재전송)와 건너뛴 seq는 버린다.
+ * 건너뛰면 문장이 끊기므로 멈추고, 최종 report가 오면 화면이 그 값으로 교체된다.
+ */
+export function createAgentDeltaAccumulator() {
+  let lastSeq = 0;
+  let text = "";
+  let broken = false;
+  return {
+    push(delta: AgentAnalysisDelta): string | null {
+      if (broken || delta.seq <= lastSeq) {
+        return null;
+      }
+      if (delta.seq !== lastSeq + 1) {
+        broken = true;
+        return null;
+      }
+      lastSeq = delta.seq;
+      text += delta.text;
+      return text;
+    }
+  };
+}
+
+/** 헤더 한 줄에 맞게, 스트리밍 중인 문장의 가장 최근 부분만 보여 준다. */
+export function agentDeltaPreview(text: string, maxChars = 64): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > maxChars ? `…${flat.slice(flat.length - maxChars + 1)}` : flat;
+}
+
+export function parseAgentDelta(data: string): AgentAnalysisDelta | null {
+  try {
+    const value = JSON.parse(data) as Record<string, unknown>;
+    if (typeof value.analysisId === "string" && typeof value.seq === "number" && typeof value.text === "string") {
+      return { analysisId: value.analysisId, seq: value.seq, text: value.text };
+    }
+  } catch {
+    // 잘못된 delta는 무시한다. 최종 report가 전체 답변을 가져온다.
+  }
+  return null;
+}
 
 export type AgentEntityResolveStatus = "confirmed" | "not_found" | "ambiguous" | "unsupported";
 
@@ -89,7 +135,7 @@ export async function requestAgentAnalysisPayload(payload: unknown, options: Age
   if (accepted) {
     options.onAccepted?.(accepted);
   }
-  return waitForAgentAnalysisReport(responsePayload, options.signal);
+  return waitForAgentAnalysisReport(responsePayload, options.signal, options.onDelta);
 }
 
 export function formatAgentAnalysisForChat(report: AgentAnalysisReport): string {
@@ -217,7 +263,7 @@ function normalizeIntentRoute(value: unknown): IntentRoute | null {
   };
 }
 
-async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal): Promise<AgentAnalysisReport> {
+async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal, onDelta?: (text: string) => void): Promise<AgentAnalysisReport> {
   throwIfAborted(signal);
   let report = normalizeAgentAnalysisPayload(payload);
   if (isTerminalAgentReport(report)) {
@@ -227,7 +273,7 @@ async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal
   const streamUrl = resolveAgentReportStreamUrl(payload);
   if (streamUrl && typeof EventSource !== "undefined") {
     try {
-      return await waitForAgentAnalysisReportStream(streamUrl, signal);
+      return await waitForAgentAnalysisReportStream(streamUrl, signal, onDelta);
     } catch (error) {
       if (isAgentRequestAbortError(error)) {
         throw error;
@@ -255,7 +301,7 @@ async function waitForAgentAnalysisReport(payload: unknown, signal?: AbortSignal
   throw new Error("AI 분석 결과를 제한 시간 안에 받지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }
 
-function waitForAgentAnalysisReportStream(streamUrl: string, signal?: AbortSignal): Promise<AgentAnalysisReport> {
+function waitForAgentAnalysisReportStream(streamUrl: string, signal?: AbortSignal, onDelta?: (text: string) => void): Promise<AgentAnalysisReport> {
   return new Promise((resolve, reject) => {
     throwIfAborted(signal);
     const source = new EventSource(streamUrl);
@@ -280,6 +326,14 @@ function waitForAgentAnalysisReportStream(streamUrl: string, signal?: AbortSigna
     };
     signal?.addEventListener("abort", handleAbort, { once: true });
 
+    const deltas = createAgentDeltaAccumulator();
+    source.addEventListener("delta", (event) => {
+      const delta = parseAgentDelta((event as MessageEvent<string>).data);
+      const text = delta ? deltas.push(delta) : null;
+      if (text !== null) {
+        onDelta?.(text);
+      }
+    });
     source.addEventListener("report", (event) => {
       try {
         const report = normalizeAgentAnalysisPayload(JSON.parse(event.data) as unknown);
